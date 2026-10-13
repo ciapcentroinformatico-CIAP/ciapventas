@@ -5,39 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CIAP Informática · Productos y servicios de tecnología</title>
     <meta name="description" content="Tienda de informática: laptops, computadoras, componentes, periféricos y redes. Servicio técnico, armado de PC e instalación de redes.">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#0a6cdc">
 
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%230f2140' d='M16 0a16 16 0 1 0 0 32 16 16 0 0 0 0-32z'/%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.4' d='M11 11h10v10H11zM14 5v6M18 5v6M14 21v6M18 21v6M5 14h6M5 18h6M21 14h6M21 18h6'/%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a6cdc'/%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.4' d='M11 11h10v10H11zM14 5v6M18 5v6M14 21v6M18 21v6M5 14h6M5 18h6M21 14h6M21 18h6'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
 
-<!-- ========== BARRA SUPERIOR ========== -->
 <header class="top">
-    <a class="brand" href="#inicio" aria-label="CIAP inicio">
-        <span class="brand-mark" data-icon="cpu"></span>
-        <span class="brand-text">
-            <span class="brand-name" data-cfg="nombre">CIAP</span>
-            <span class="brand-sub" data-cfg="subtitulo">Informática</span>
-        </span>
-    </a>
+    <!-- Franja de contacto -->
+    <div class="util">
+        <div class="wrap util-row">
+            <span class="util-item"><span data-icon="truck"></span>Envíos a todo el país</span>
+            <span class="util-item"><span data-icon="clock"></span><span data-contact="horario"></span></span>
+            <span class="util-item util-right"><span data-icon="phone"></span><span data-contact="telefono"></span></span>
+            <span class="util-item"><span data-icon="mail"></span><span data-contact="email"></span></span>
+        </div>
+    </div>
 
-    <nav class="nav" id="nav" aria-label="Principal">
-        <a href="#inicio" data-link="inicio">Inicio</a>
-        <a href="#productos" data-link="productos">Productos</a>
-        <a href="#servicios" data-link="servicios">Servicios</a>
-        <a href="#nosotros" data-link="nosotros">Nosotros</a>
-        <a href="#contacto" data-link="contacto">Contacto</a>
-    </nav>
-
-    <div class="actions">
-        <button class="icon-btn" id="btnSearch" title="Buscar" aria-label="Buscar"><span data-icon="search"></span></button>
-        <button class="icon-btn" id="btnFavs" title="Favoritos" aria-label="Favoritos"><span data-icon="heart"></span><span class="count" data-fav-count hidden>0</span></button>
-        <button class="icon-btn" id="btnCart" title="Carrito" aria-label="Carrito"><span data-icon="cart"></span><span class="count" data-cart-count hidden>0</span></button>
+    <!-- Marca, buscador y carrito -->
+    <div class="wrap head">
         <button class="icon-btn burger" id="btnMenu" aria-label="Menú" aria-controls="nav" aria-expanded="false"><span data-icon="menu"></span></button>
+
+        <a class="brand" href="#inicio" aria-label="CIAP inicio">
+            <span class="brand-mark" data-icon="cpu"></span>
+            <span class="brand-text">
+                <span class="brand-name" data-cfg="nombre">CIAP</span>
+                <span class="brand-sub" data-cfg="subtitulo">Informática</span>
+            </span>
+        </a>
+
+        <form class="search" id="searchForm" role="search">
+            <select id="searchCat" aria-label="Categoría"></select>
+            <input type="search" id="searchInput" placeholder="Buscar laptop, SSD, router…" autocomplete="off" aria-label="Buscar productos">
+            <button class="search-btn" aria-label="Buscar"><span data-icon="search"></span><span class="search-txt">Buscar</span></button>
+        </form>
+
+        <div class="actions">
+            <button class="icon-btn" id="btnFavs" title="Favoritos" aria-label="Favoritos"><span data-icon="heart"></span><span class="count" data-fav-count hidden>0</span></button>
+            <button class="cart-btn" id="btnCart" aria-label="Carrito">
+                <span data-icon="cart"></span>
+                <span class="cart-txt"><small>Mi carrito</small><b data-cart-total></b></span>
+                <span class="count" data-cart-count hidden>0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Menú -->
+    <div class="navbar">
+        <div class="wrap nav-row">
+            <div class="cats">
+                <button class="cats-btn" id="btnCats" aria-haspopup="true" aria-expanded="false"><span data-icon="menu"></span>Todas las categorías</button>
+                <div class="cats-menu" id="catMenu" role="menu"></div>
+            </div>
+            <nav class="nav" id="nav" aria-label="Principal">
+                <a href="#inicio" data-link="inicio">Inicio</a>
+                <a href="#productos" data-link="productos">Productos</a>
+                <a href="#servicios" data-link="servicios">Servicios</a>
+                <a href="#nosotros" data-link="nosotros">Nosotros</a>
+                <a href="#contacto" data-link="contacto">Contacto</a>
+            </nav>
+            <span class="nav-help"><span data-icon="headset"></span>Soporte: <b data-contact="telefono"></b></span>
+        </div>
     </div>
 </header>
 
@@ -45,47 +77,35 @@
 
     <!-- ========== INICIO ========== -->
     <section class="view view-home" data-view="inicio">
-        <div class="home-main wrap">
-            <div class="hero-copy">
-                <span class="eyebrow" id="heroTag"></span>
-                <h1><span id="heroTitle"></span><em id="heroAccent"></em></h1>
-                <p id="heroText"></p>
-                <div class="btn-row">
-                    <a href="#productos" class="btn btn-solid">Ver productos</a>
-                    <a href="#servicios" class="btn btn-line">Nuestros servicios</a>
-                </div>
-                <div class="stats" id="heroStats"></div>
-            </div>
-            <div class="feature" id="feature" aria-label="Producto destacado"></div>
+        <div class="wrap home">
+            <div class="hero" id="feature" aria-label="Destacados"></div>
+            <div class="benefits-row" id="benefits"></div>
+            <div class="cat-tiles" id="catTiles"></div>
         </div>
-        <div class="cat-strip"><div class="wrap cat-tiles" id="catTiles"></div></div>
     </section>
 
     <!-- ========== PRODUCTOS ========== -->
     <section class="view view-catalog" data-view="productos">
-        <div class="catalog-head wrap">
-            <div class="view-title">
-                <h2>Catálogo de productos</h2>
-                <span class="muted" id="resultCount"></span>
-            </div>
-            <div class="toolbar">
-                <label class="search-box">
-                    <span data-icon="search"></span>
-                    <input type="search" id="searchInput" placeholder="Buscar laptop, SSD, router…" autocomplete="off" aria-label="Buscar productos">
-                </label>
-                <select id="sortSelect" class="input" aria-label="Ordenar">
-                    <option value="destacado">Destacados</option>
-                    <option value="precio-asc">Precio: menor a mayor</option>
-                    <option value="precio-desc">Precio: mayor a menor</option>
-                    <option value="nombre">Nombre A–Z</option>
-                </select>
-            </div>
-            <div class="chips" id="chips" role="tablist" aria-label="Categorías"></div>
-        </div>
-        <div class="catalog-body">
-            <div class="wrap">
-                <div class="grid" id="productGrid"></div>
-                <p class="empty" id="emptyState" hidden>No encontramos productos con ese filtro.</p>
+        <div class="wrap catalog">
+            <aside class="cat-side">
+                <h3>Categorías</h3>
+                <div class="chips" id="chips" role="tablist" aria-label="Categorías"></div>
+            </aside>
+            <div class="catalog-main">
+                <div class="catalog-bar">
+                    <h2 id="catalogTitle">Todos los productos</h2>
+                    <span class="muted" id="resultCount"></span>
+                    <select id="sortSelect" class="input" aria-label="Ordenar">
+                        <option value="destacado">Destacados</option>
+                        <option value="precio-asc">Precio: menor a mayor</option>
+                        <option value="precio-desc">Precio: mayor a menor</option>
+                        <option value="nombre">Nombre A–Z</option>
+                    </select>
+                </div>
+                <div class="catalog-body">
+                    <div class="grid" id="productGrid"></div>
+                    <p class="empty" id="emptyState" hidden>No encontramos productos con ese filtro.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -103,17 +123,14 @@
 
     <!-- ========== NOSOTROS ========== -->
     <section class="view" data-view="nosotros">
-        <div class="wrap pad about-wrap">
-            <div class="about">
-                <div>
-                    <span class="eyebrow">Nosotros</span>
-                    <h2 id="aboutTitle"></h2>
-                    <div id="aboutText"></div>
-                    <div class="stats" id="aboutStats"></div>
-                </div>
-                <div class="values" id="values"></div>
+        <div class="wrap pad about">
+            <div>
+                <span class="eyebrow">Nosotros</span>
+                <h2 id="aboutTitle"></h2>
+                <div id="aboutText"></div>
+                <div class="stats" id="aboutStats"></div>
             </div>
-            <div class="benefits-row" id="benefits"></div>
+            <div class="values" id="values"></div>
         </div>
     </section>
 

@@ -47,7 +47,7 @@
     /* ---------- Utilidades ---------- */
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const money = (n) => `${T.moneda} ${Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     let catMap = {};
     // Un producto con una categoría que ya no existe se sigue mostrando
     const catOf = (p) => catMap[p.categoria] || { nombre: '', icono: 'cpu' };
@@ -91,6 +91,7 @@
         });
         $$('.view.active, .view.active .catalog-body').forEach((el) => { el.scrollTop = 0; });
         closeMenu();
+        toggleCats(false);
     }
     const go = (name) => { if (location.hash === '#' + name) showView(name); else location.hash = name; };
 
@@ -98,6 +99,11 @@
         $('#nav').classList.remove('open');
         $('#btnMenu').setAttribute('aria-expanded', 'false');
         $('#btnMenu').innerHTML = icon('menu');
+    }
+    /** Abre o cierra "Todas las categorías" (sin argumento, alterna) */
+    function toggleCats(abrir) {
+        const open = $('.cats').classList.toggle('open', abrir);
+        $('#btnCats').setAttribute('aria-expanded', String(open));
     }
     function toggleMenu() {
         const open = $('#nav').classList.toggle('open');
@@ -111,26 +117,27 @@
         $$('[data-cfg]').forEach((el) => { el.textContent = T.marca[el.dataset.cfg]; });
         document.title = `${T.marca.nombre} ${T.marca.subtitulo} · Productos y servicios de tecnología`;
 
-        $('#heroTag').textContent = T.portada.etiqueta;
-        $('#heroTitle').textContent = T.portada.titulo;
-        $('#heroAccent').textContent = T.portada.resaltado;
-        $('#heroText').textContent = T.portada.texto;
+        $$('[data-contact]').forEach((el) => { el.textContent = T.contacto[el.dataset.contact] || ''; });
+
         $('#aboutTitle').textContent = T.nosotros.titulo;
         // Una línea en blanco separa los párrafos
         $('#aboutText').innerHTML = String(T.nosotros.texto).split(/\n\s*\n/).filter((p) => p.trim()).map((p) => `<p>${esc(p.trim())}</p>`).join('');
 
         const stats = T.estadisticas.map((s) => `<div><strong>${esc(s.numero)}</strong><span>${esc(s.texto)}</span></div>`).join('');
-        $('#heroStats').innerHTML = stats;
         $('#aboutStats').innerHTML = stats;
 
         const conteo = {};
         T.productos.forEach((p) => { conteo[p.categoria] = (conteo[p.categoria] || 0) + 1; });
+        const cuantos = (c) => { const n = conteo[c.slug] || 0; return `${n} ${n === 1 ? 'producto' : 'productos'}`; };
         $('#catTiles').innerHTML = T.categorias.map((c) => `
             <button class="cat-tile" data-cat="${esc(c.slug)}">
-                ${icon(c.icono)}
-                <strong>${esc(c.nombre)}</strong>
-                <span>${conteo[c.slug] || 0} productos</span>
+                <span class="cat-ic">${icon(c.icono)}</span>
+                <span class="cat-txt"><strong>${esc(c.nombre)}</strong><small>${cuantos(c)}</small></span>
             </button>`).join('');
+        $('#catMenu').innerHTML = T.categorias.map((c) => `
+            <button data-cat="${esc(c.slug)}" role="menuitem">${icon(c.icono)}<span>${esc(c.nombre)}</span><small>${conteo[c.slug] || 0}</small></button>`).join('');
+        $('#searchCat').innerHTML = '<option value="todos">Todas las categorías</option>'
+            + T.categorias.map((c) => `<option value="${esc(c.slug)}">${esc(c.nombre)}</option>`).join('');
 
         $('#benefits').innerHTML = T.beneficios.map((b) => `
             <div class="benefit">${icon(b.icono)}<div><strong>${esc(b.titulo)}</strong><span>${esc(b.texto)}</span></div></div>`).join('');
@@ -151,63 +158,85 @@
             .map((o) => `<option>${esc(o)}</option>`).join('');
     }
 
-    /* ---------- Producto destacado de la portada ---------- */
+    /* ---------- Banner de la portada ---------- */
     let featIdx = 0;
     let featTimer;
-    const descuento = (p) => (p.precioAntes > p.precio ? `<span class="off">-${Math.round((1 - p.precio / p.precioAntes) * 100)}%</span>` : '');
-    const precioHtml = (p) => `${p.precioAntes > p.precio ? `<s>${money(p.precioAntes)}</s>` : ''}<strong>${money(p.precio)}${descuento(p)}</strong>`;
+    const pctOff = (p) => (p.precioAntes > p.precio ? Math.round((1 - p.precio / p.precioAntes) * 100) : 0);
+    const precioHtml = (p) => `<strong>${money(p.precio)}</strong>${pctOff(p) ? `<s>${money(p.precioAntes)}</s>` : ''}`;
+    const etiquetas = (p) => `<span class="tags">${p.stock <= 0 ? '<span class="tag tag-out">Agotado</span>' : ''}${p.etiqueta ? `<span class="tag">${esc(p.etiqueta)}</span>` : ''}${pctOff(p) ? `<span class="tag tag-off">-${pctOff(p)}%</span>` : ''}</span>`;
 
     function destacados() {
         const lista = T.productos.filter((p) => p.destacado && p.stock > 0);
         return lista.length ? lista : T.productos.filter((p) => p.stock > 0).slice(0, 4);
     }
 
-    function renderFeature(paso = 0) {
-        const lista = destacados();
-        const caja = $('#feature');
-        caja.hidden = lista.length === 0;
-        if (!lista.length) return;
-        featIdx = (featIdx + paso + lista.length) % lista.length;
-        const p = lista[featIdx];
-        const flecha = (paso, nombre, texto) => (lista.length > 1
-            ? `<button class="feature-arrow" data-feat="${paso}" aria-label="${texto}">${icon(nombre)}</button>` : '');
-        caja.innerHTML = `
-            <div class="feature-stage">
-                ${flecha(-1, 'prev', 'Destacado anterior')}
-                <button class="feature-arch" data-open="${p.id}" aria-label="Ver ${esc(p.nombre)}">
-                    <span class="feature-visual">${visual(p)}</span>
-                </button>
-                ${flecha(1, 'next', 'Destacado siguiente')}
-            </div>
-            <div class="feature-body">
-                <span class="card-cat">${esc(p.etiqueta || 'Destacado')} · ${esc(catOf(p).nombre)}</span>
-                <h2><button data-open="${p.id}">${esc(p.nombre)}</button></h2>
-                <p class="feature-specs">${p.specs.slice(0, 3).map(esc).join(' · ')}</p>
-                <div class="feature-foot">
+    // La primera lámina presenta la tienda (null); las demás, los productos destacados
+    const laminas = () => [null].concat(destacados());
+
+    function laminaHtml(p) {
+        if (!p) {
+            return `
+                <div class="slide">
+                    <div class="slide-copy">
+                        <span class="slide-tag">${esc(T.portada.etiqueta)}</span>
+                        <h1>${esc(T.portada.titulo)}<em>${esc(T.portada.resaltado)}</em></h1>
+                        <p>${esc(T.portada.texto)}</p>
+                        <div class="btn-row">
+                            <a href="#productos" class="btn btn-solid">Ver productos</a>
+                            <a href="#servicios" class="btn btn-line">Nuestros servicios</a>
+                        </div>
+                    </div>
+                    <div class="slide-visual" aria-hidden="true">
+                        <span class="orb orb-1">${icon('laptop')}</span>
+                        <span class="orb orb-2">${icon('wifi')}</span>
+                        <span class="orb orb-3">${icon('wrench')}</span>
+                    </div>
+                </div>`;
+        }
+        return `
+            <div class="slide">
+                <div class="slide-copy">
+                    <span class="slide-tag">${esc(p.etiqueta || 'Destacado')} · ${esc(catOf(p).nombre)}</span>
+                    <h1><button data-open="${p.id}">${esc(p.nombre)}</button></h1>
+                    <p>${p.specs.slice(0, 4).map(esc).join(' · ')}</p>
                     <div class="price">${precioHtml(p)}</div>
-                    <button class="btn btn-solid btn-sm" data-add="${p.id}">Agregar</button>
+                    <div class="btn-row">
+                        <button class="btn btn-solid" data-add="${p.id}">${icon('cart')}Agregar al carrito</button>
+                        <button class="btn btn-line" data-open="${p.id}">Ver detalle</button>
+                    </div>
                 </div>
+                <button class="slide-visual" data-open="${p.id}" aria-label="Ver ${esc(p.nombre)}">
+                    ${p.imagen ? `<img src="${esc(p.imagen)}" alt="">` : `<span class="orb orb-1">${icon(catOf(p).icono)}</span>`}
+                </button>
             </div>`;
     }
 
-    // Cambia solo cada 6 s; se detiene si el cursor está encima o si se pide menos movimiento
+    function renderFeature(paso = 0) {
+        const lista = laminas();
+        featIdx = (featIdx + paso + lista.length) % lista.length;
+        const controles = lista.length > 1 ? `
+            <button class="hero-arrow hero-prev" data-feat="-1" aria-label="Anterior">${icon('prev')}</button>
+            <button class="hero-arrow hero-next" data-feat="1" aria-label="Siguiente">${icon('next')}</button>
+            <div class="hero-dots">${lista.map((_, i) => `<button data-slide="${i}" class="${i === featIdx ? 'active' : ''}" aria-label="Lámina ${i + 1}"></button>`).join('')}</div>` : '';
+        $('#feature').innerHTML = laminaHtml(lista[featIdx]) + controles;
+    }
+
+    // Cambia solo cada 7 s; se detiene si el cursor está encima o si se pide menos movimiento
     function rotarDestacados() {
         clearInterval(featTimer);
-        if (destacados().length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (laminas().length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         featTimer = setInterval(() => {
             const caja = $('#feature');
             if (caja.matches(':hover, :focus-within') || !caja.closest('.view').classList.contains('active')) return;
             renderFeature(1);
-        }, 6000);
+        }, 7000);
     }
 
     /* ---------- Servicios ---------- */
     function renderServices() {
-        $('#serviceGrid').innerHTML = T.servicios.map((s, i) => `
+        $('#serviceGrid').innerHTML = T.servicios.map((s) => `
             <article class="panel service">
-                <span class="service-n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-                <span class="service-ic">${icon(s.icono)}</span>
-                <h3>${esc(s.nombre)}</h3>
+                <div class="service-top"><span class="service-ic">${icon(s.icono)}</span><h3>${esc(s.nombre)}</h3></div>
                 <p>${esc(s.texto)}</p>
                 <ul>${s.incluye.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>
                 <div class="service-foot">
@@ -219,9 +248,19 @@
 
     /* ---------- Catálogo ---------- */
     function renderChips() {
-        const chips = [{ slug: 'todos', nombre: 'Todos' }].concat(T.categorias, [{ slug: 'favoritos', nombre: 'Favoritos' }]);
+        const n = { todos: T.productos.length, favoritos: favs.length };
+        T.productos.forEach((p) => { n[p.categoria] = (n[p.categoria] || 0) + 1; });
+        const chips = [{ slug: 'todos', nombre: 'Todos los productos' }].concat(T.categorias, [{ slug: 'favoritos', nombre: 'Mis favoritos' }]);
         $('#chips').innerHTML = chips.map((c) =>
-            `<button class="chip${c.slug === filtro.categoria ? ' active' : ''}" data-cat="${esc(c.slug)}" role="tab" aria-selected="${c.slug === filtro.categoria}">${esc(c.nombre)}</button>`).join('');
+            `<button class="chip${c.slug === filtro.categoria ? ' active' : ''}" data-cat="${esc(c.slug)}" role="tab" aria-selected="${c.slug === filtro.categoria}"><span>${esc(c.nombre)}</span><small>${n[c.slug] || 0}</small></button>`).join('');
+        // El selector del buscador muestra la misma categoría
+        $('#searchCat').value = catMap[filtro.categoria] ? filtro.categoria : 'todos';
+    }
+
+    function tituloCatalogo() {
+        if (filtro.q.trim()) return `Resultados para "${filtro.q.trim()}"`;
+        if (filtro.categoria === 'favoritos') return 'Mis favoritos';
+        return (catMap[filtro.categoria] || {}).nombre || 'Todos los productos';
     }
 
     function productosFiltrados() {
@@ -242,7 +281,6 @@
     }
 
     function productCard(p) {
-        const cat = catOf(p);
         const agotado = p.stock <= 0;
         const fav = favs.includes(p.id);
         return `
@@ -250,16 +288,14 @@
                 <button class="fav${fav ? ' active' : ''}" data-fav="${p.id}" aria-label="${fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}" aria-pressed="${fav}">${icon('heart')}</button>
                 <button class="thumb" data-open="${p.id}" aria-label="Ver ${esc(p.nombre)}">
                     ${visual(p)}
-                    ${agotado ? '<span class="tag tag-out">Agotado</span>' : (p.etiqueta ? `<span class="tag">${esc(p.etiqueta)}</span>` : '')}
+                    ${etiquetas(p)}
                 </button>
                 <div class="card-body">
-                    <span class="card-cat">${esc(cat.nombre)}</span>
+                    <span class="card-cat">${esc(catOf(p).nombre)}</span>
                     <h3><button data-open="${p.id}">${esc(p.nombre)}</button></h3>
                     <p class="card-specs">${p.specs.slice(0, 3).map(esc).join(' · ')}</p>
-                    <div class="card-foot">
-                        <div class="price">${precioHtml(p)}</div>
-                        <button class="add" data-add="${p.id}" ${agotado ? 'disabled' : ''} aria-label="Agregar ${esc(p.nombre)} al carrito">${icon('plus')}</button>
-                    </div>
+                    <div class="price">${precioHtml(p)}</div>
+                    <button class="btn btn-line btn-cart" data-add="${p.id}" ${agotado ? 'disabled' : ''} aria-label="Agregar ${esc(p.nombre)} al carrito">${icon('cart')}<span>${agotado ? 'Agotado' : 'Agregar al carrito'}</span></button>
                 </div>
             </article>`;
     }
@@ -271,6 +307,7 @@
         $('#emptyState').textContent = filtro.categoria === 'favoritos' && !filtro.q
             ? 'Aún no tienes favoritos. Toca el corazón de un producto para guardarlo.'
             : 'No encontramos productos con ese filtro.';
+        $('#catalogTitle').textContent = tituloCatalogo();
         $('#resultCount').textContent = `${lista.length} ${lista.length === 1 ? 'producto' : 'productos'}`;
     }
 
@@ -289,7 +326,7 @@
         const modal = $('#productModal');
         modal.innerHTML = `
             <button class="icon-btn modal-close" data-close aria-label="Cerrar">${icon('x')}</button>
-            <div class="modal-thumb">${visual(p)}</div>
+            <div class="modal-thumb">${visual(p)}${etiquetas(p)}</div>
             <div class="modal-info">
                 <span class="card-cat">${esc(cat.nombre)}</span>
                 <h2>${esc(p.nombre)}</h2>
@@ -312,6 +349,7 @@
         favs = era ? favs.filter((f) => f !== id) : favs.concat(id);
         store.set('ciap_favs', favs);
         updateCounts();
+        renderChips();
         renderProducts();
         toast(era ? 'Quitado de favoritos' : 'Guardado en favoritos');
     }
@@ -347,6 +385,7 @@
     function updateCounts() {
         const n = cartLines().reduce((t, l) => t + l.qty, 0);
         $$('[data-cart-count]').forEach((el) => { el.textContent = n; el.hidden = n === 0; });
+        $$('[data-cart-total]').forEach((el) => { el.textContent = money(cartTotal()); });
         $$('[data-fav-count]').forEach((el) => { el.textContent = favs.length; el.hidden = favs.length === 0; });
     }
 
@@ -446,10 +485,26 @@
         $('#btnCartClose').addEventListener('click', closeCart);
         $('#backdrop').addEventListener('click', closeCart);
         $('#btnCheckout').addEventListener('click', checkout);
-        $('#btnSearch').addEventListener('click', () => { go('productos'); $('#searchInput').focus(); });
         $('#btnFavs').addEventListener('click', () => { setCategoria('favoritos'); go('productos'); });
 
-        $('#searchInput').addEventListener('input', (e) => { filtro.q = e.target.value; renderProducts(); });
+        // El buscador está en la cabecera: al escribir se pasa al catálogo
+        const verCatalogo = () => { if (!$('.view-catalog').classList.contains('active')) go('productos'); };
+        $('#searchForm').addEventListener('submit', (e) => { e.preventDefault(); verCatalogo(); });
+        $('#searchInput').addEventListener('input', (e) => {
+            filtro.q = e.target.value;
+            renderProducts();
+            if (filtro.q.trim()) verCatalogo();
+        });
+        $('#searchCat').addEventListener('change', (e) => { setCategoria(e.target.value); verCatalogo(); });
+
+        $('#btnCats').addEventListener('click', (e) => { e.stopPropagation(); toggleCats(); });
+        $('#catMenu').addEventListener('click', (e) => {
+            const item = e.target.closest('[data-cat]');
+            if (!item) return;
+            setCategoria(item.dataset.cat);
+            go('productos');
+        });
+        document.addEventListener('click', () => toggleCats(false));
         $('#sortSelect').addEventListener('change', (e) => { filtro.orden = e.target.value; renderProducts(); });
         $('#chips').addEventListener('click', (e) => {
             const chip = e.target.closest('[data-cat]');
@@ -466,10 +521,11 @@
 
         // Acciones delegadas: sirven para las tarjetas, el detalle y el carrito
         document.addEventListener('click', (e) => {
-            const el = e.target.closest('[data-add],[data-fav],[data-open],[data-close],[data-qty],[data-remove],[data-service],[data-feat]');
+            const el = e.target.closest('[data-add],[data-fav],[data-open],[data-close],[data-qty],[data-remove],[data-service],[data-feat],[data-slide]');
             if (!el) return;
             const d = el.dataset;
-            if (d.feat) { renderFeature(Number(d.feat)); rotarDestacados(); }
+            if (d.slide) { renderFeature(Number(d.slide) - featIdx); rotarDestacados(); }
+            else if (d.feat) { renderFeature(Number(d.feat)); rotarDestacados(); }
             else if (d.add) addToCart(d.add);
             else if (d.fav) toggleFav(d.fav);
             else if (d.open) openProduct(d.open);
@@ -486,7 +542,7 @@
 
         // Clic fuera del detalle lo cierra
         $('#productModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeCart(); closeMenu(); } });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeCart(); closeMenu(); toggleCats(false); } });
 
         $('#contactForm').addEventListener('submit', (e) => {
             e.preventDefault();
