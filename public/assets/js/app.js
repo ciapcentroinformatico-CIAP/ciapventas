@@ -156,7 +156,6 @@
     let featTimer;
     const descuento = (p) => (p.precioAntes > p.precio ? `<span class="off">-${Math.round((1 - p.precio / p.precioAntes) * 100)}%</span>` : '');
     const precioHtml = (p) => `${p.precioAntes > p.precio ? `<s>${money(p.precioAntes)}</s>` : ''}<strong>${money(p.precio)}${descuento(p)}</strong>`;
-    const codigo = (p) => '#' + String(p.id).padStart(3, '0');
 
     function destacados() {
         const lista = T.productos.filter((p) => p.destacado && p.stock > 0);
@@ -170,26 +169,23 @@
         if (!lista.length) return;
         featIdx = (featIdx + paso + lista.length) % lista.length;
         const p = lista[featIdx];
-        const n = (x) => String(x).padStart(2, '0');
+        const flecha = (paso, nombre, texto) => (lista.length > 1
+            ? `<button class="feature-arrow" data-feat="${paso}" aria-label="${texto}">${icon(nombre)}</button>` : '');
         caja.innerHTML = `
-            <div class="feature-bar">
-                <span>Destacado <b>${n(featIdx + 1)}</b>/${n(lista.length)}</span>
-                ${lista.length > 1 ? `<span class="feature-nav">
-                    <button data-feat="-1" aria-label="Destacado anterior">${icon('prev')}</button>
-                    <button data-feat="1" aria-label="Destacado siguiente">${icon('next')}</button>
-                </span>` : ''}
+            <div class="feature-stage">
+                ${flecha(-1, 'prev', 'Destacado anterior')}
+                <button class="feature-arch" data-open="${p.id}" aria-label="Ver ${esc(p.nombre)}">
+                    <span class="feature-visual">${visual(p)}</span>
+                </button>
+                ${flecha(1, 'next', 'Destacado siguiente')}
             </div>
-            <button class="feature-visual" data-open="${p.id}" aria-label="Ver ${esc(p.nombre)}">
-                ${visual(p)}
-                ${p.etiqueta ? `<span class="tag">${esc(p.etiqueta)}</span>` : ''}
-            </button>
             <div class="feature-body">
-                <span class="card-cat">${esc(catOf(p).nombre)} <i>${codigo(p)}</i></span>
+                <span class="card-cat">${esc(p.etiqueta || 'Destacado')} · ${esc(catOf(p).nombre)}</span>
                 <h2><button data-open="${p.id}">${esc(p.nombre)}</button></h2>
-                <ul class="feature-specs">${p.specs.slice(0, 4).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+                <p class="feature-specs">${p.specs.slice(0, 3).map(esc).join(' · ')}</p>
                 <div class="feature-foot">
                     <div class="price">${precioHtml(p)}</div>
-                    <button class="btn btn-solid" data-add="${p.id}">Agregar</button>
+                    <button class="btn btn-solid btn-sm" data-add="${p.id}">Agregar</button>
                 </div>
             </div>`;
     }
@@ -257,7 +253,7 @@
                     ${agotado ? '<span class="tag tag-out">Agotado</span>' : (p.etiqueta ? `<span class="tag">${esc(p.etiqueta)}</span>` : '')}
                 </button>
                 <div class="card-body">
-                    <span class="card-cat">${esc(cat.nombre)} <i>${codigo(p)}</i></span>
+                    <span class="card-cat">${esc(cat.nombre)}</span>
                     <h3><button data-open="${p.id}">${esc(p.nombre)}</button></h3>
                     <p class="card-specs">${p.specs.slice(0, 3).map(esc).join(' · ')}</p>
                     <div class="card-foot">
@@ -295,7 +291,7 @@
             <button class="icon-btn modal-close" data-close aria-label="Cerrar">${icon('x')}</button>
             <div class="modal-thumb">${visual(p)}</div>
             <div class="modal-info">
-                <span class="card-cat">${esc(cat.nombre)} <i>${codigo(p)}</i></span>
+                <span class="card-cat">${esc(cat.nombre)}</span>
                 <h2>${esc(p.nombre)}</h2>
                 <p>${esc(p.descripcion)}</p>
                 <ul class="spec-list">${p.specs.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
