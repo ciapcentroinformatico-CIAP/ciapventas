@@ -267,6 +267,22 @@
         },
     };
 
+    /* ---------- Mi usuario ---------- */
+
+    VISTAS.usuario = () => cabecera('Mi usuario', 'El usuario y la contraseña con los que entras a este panel.') + `
+        <form id="formUsuario" class="caja caja-estrecha" autocomplete="off">
+            <h2>Datos de acceso</h2>
+            <div class="form">
+                <label class="full">Usuario<input name="usuario" value="${esc(D.usuario)}" minlength="3" maxlength="40" autocomplete="username" required><small>Letras, números, puntos o guiones, sin espacios.</small></label>
+                <label class="full">Contraseña actual<input name="actual" type="password" autocomplete="current-password" required><small>Se pide siempre, para confirmar que eres tú.</small></label>
+                <label>Nueva contraseña<input name="nueva" type="password" minlength="8" maxlength="200" autocomplete="new-password"><small>Mínimo 8 caracteres. Déjala vacía si solo cambias el usuario.</small></label>
+                <label>Repetir nueva contraseña<input name="repetir" type="password" maxlength="200" autocomplete="new-password"></label>
+                <label class="check full"><input type="checkbox" data-ver-claves>Mostrar las contraseñas</label>
+            </div>
+            <p class="caja-nota">Al cambiar la contraseña se cierran las sesiones abiertas en otros equipos. Esta sigue abierta.</p>
+            <div class="barra-fija"><button class="btn">Guardar cambios</button></div>
+        </form>`;
+
     /* ---------- Listas editables (cifras, beneficios, valores) ---------- */
 
     // Cada campo: [clave, texto de ayuda, largo máximo | 'icono']
@@ -505,7 +521,10 @@
 
     document.addEventListener('change', async (e) => {
         const t = e.target;
-        if (t.matches('[data-estado]')) {
+        if (t.matches('[data-ver-claves]')) {
+            $$('#formUsuario input[name="actual"], #formUsuario input[name="nueva"], #formUsuario input[name="repetir"]')
+                .forEach((el) => { el.type = t.checked ? 'text' : 'password'; });
+        } else if (t.matches('[data-estado]')) {
             accion(() => api('PATCH', `/pedidos/${encodeURIComponent(t.dataset.estado)}`, { estado: t.value }), 'Estado actualizado');
         } else if (t.matches('[data-foto]') && t.files[0]) {
             const caja = t.closest('.foto');
@@ -526,6 +545,14 @@
         if (form.id === 'formTienda') {
             e.preventDefault();
             accion(() => api('PUT', '/configuracion', leerTienda(form)), 'Cambios guardados');
+        } else if (form.id === 'formUsuario') {
+            e.preventDefault();
+            const f = new FormData(form);
+            if (f.get('nueva') !== f.get('repetir')) { toast('Las dos contraseñas nuevas no coinciden.', true); return; }
+            const cambiaClave = Boolean(f.get('nueva'));
+            // Al recargar los datos la vista se dibuja de nuevo y los campos de contraseña quedan vacíos
+            accion(() => api('PUT', '/usuario', { usuario: f.get('usuario').trim(), actual: f.get('actual'), nueva: f.get('nueva') }),
+                cambiaClave ? 'Contraseña cambiada' : 'Usuario cambiado');
         } else if (form.dataset.tipo) {
             e.preventDefault();
             const { tipo, id } = form.dataset;

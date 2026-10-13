@@ -117,7 +117,7 @@ function limpiarConfiguracion(b) {
 router.use(auth.mismoOrigen);
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
-router.get('/sesion', (req, res) => res.json({ ok: true, activo: auth.configurado(), sesion: auth.haySesion(req) }));
+router.get('/sesion', auth.estado);
 router.post('/login', auth.login);
 router.post('/logout', auth.logout);
 
@@ -137,6 +137,10 @@ const ruta = (fn) => (req, res, next) => fn(req, res).catch((err) => {
     next(err);
 });
 
+/* ---------- Usuario del panel ---------- */
+
+router.put('/usuario', auth.cambiarAcceso);
+
 /* ---------- Lectura ---------- */
 
 router.get('/datos', ruta(async (req, res) => {
@@ -151,7 +155,7 @@ router.get('/datos', ruta(async (req, res) => {
         b.collection('mensajes').find({}).sort({ fecha: -1 }).limit(300).toArray(),
     ]);
     res.json({
-        ok: true, configuracion: datos.configuracion(config), categorias, productos, servicios, pedidos,
+        ok: true, usuario: await auth.usuarioActual(), configuracion: datos.configuracion(config), categorias, productos, servicios, pedidos,
         mensajes: mensajes.map(({ _id, ...m }) => ({ id: String(_id), ...m })),
     });
 }));

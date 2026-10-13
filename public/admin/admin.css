@@ -153,6 +153,9 @@ select.estado { width: auto; padding: 5px 8px; font-size: 13px; }
 .caja h2 { font-size: 17px; margin-bottom: 14px; }
 .foto { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
 .foto img, .foto .mini-vacio { width: 84px; height: 84px; border-radius: 4px; object-fit: contain; background: var(--paper); flex: none; }
+.caja-estrecha { max-width: 640px; }
+.caja-nota { margin-top: 16px; padding: 10px 12px; border-radius: 4px; background: var(--paper); font-size: 13.5px; color: var(--muted); }
+.barra-fija { display: flex; justify-content: flex-end; margin-top: 16px; }
 .sub-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
 .caja-ayuda { margin: -8px 0 14px; font-size: 13.5px; color: var(--muted); }
 

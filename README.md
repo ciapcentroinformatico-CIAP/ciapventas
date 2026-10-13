@@ -57,7 +57,7 @@ Cada `git push` a la rama que Render tiene configurada vuelve a publicar la tien
 
 ## Panel de administración
 
-Entra en `https://TU-SITIO.onrender.com/admin/` con el usuario `admin` y la contraseña que pusiste en `ADMIN_PASSWORD`.
+Entra en `https://TU-SITIO.onrender.com/admin/`. La primera vez, con el usuario `admin` y la contraseña que pusiste en `ADMIN_PASSWORD`; después puedes cambiar ambos en **Mi usuario**.
 
 | Sección | Qué se hace |
 |---|---|
@@ -67,16 +67,17 @@ Entra en `https://TU-SITIO.onrender.com/admin/` con el usuario `admin` y la cont
 | Productos | Crear, editar, ocultar o borrar. Precio, oferta, stock, características y foto |
 | Categorías | Crear, ordenar u ocultar. No se puede borrar una categoría que tiene productos |
 | Servicios | Crear y editar los servicios técnicos |
+| Mi usuario | Cambiar el usuario y la contraseña de acceso al panel |
 | Datos de la tienda | Logo, colores, WhatsApp y contacto, portada, beneficios, textos de cada sección, Nosotros y lo que muestra Google |
 
 - Los cambios se ven en la tienda al momento.
 - **Fotos:** toda imagen que se sube (productos, logo, portada) se convierte a WebP, se reduce a 1400 px como máximo y se guarda en la base de datos, así que pesa poco y no se pierde cuando Render reinicia.
 - **Logo y colores:** el logo se usa en la cabecera, en la portada y como ícono de la pestaña. Los dos colores de la tienda se eligen en *Datos de la tienda*; el botón *Volver a los colores del logo* restaura el azul `#26308f` y el celeste `#00adef`.
-- **Lo único que no se cambia desde el panel** es el usuario y la contraseña de acceso: van en las variables `ADMIN_USER` y `ADMIN_PASSWORD` de Render.
+- **Usuario y contraseña:** se cambian en *Mi usuario* (pide siempre la contraseña actual). Se guardan cifrados en la colección `usuarios` y, desde ese momento, las variables `ADMIN_USER` y `ADMIN_PASSWORD` de Render dejan de valer. Cambiar la contraseña cierra las sesiones abiertas en otros equipos.
 - **Destacado en la portada:** los productos marcados rotan en la ficha de la página de inicio.
 - **Inventario:** los pedidos no descuentan stock. Quedan como `pendiente`, el cobro se coordina por WhatsApp y el stock se ajusta a mano en el producto.
-- **Seguridad:** tras 5 intentos fallidos el acceso se bloquea 15 minutos, y la sesión dura 8 horas. Cambiar `ADMIN_PASSWORD` cierra todas las sesiones abiertas.
-- Sin `ADMIN_PASSWORD` (o con menos de 8 caracteres) el panel queda desactivado.
+- **Seguridad:** tras 5 intentos fallidos el acceso se bloquea 15 minutos, y la sesión dura 8 horas.
+- Sin `ADMIN_PASSWORD` (o con menos de 8 caracteres) el panel queda desactivado hasta que exista una contraseña guardada desde *Mi usuario*.
 
 ## Base de datos
 
@@ -91,6 +92,7 @@ Todo vive en la base `ciap` de Atlas (**Database → Browse Collections**, despl
 | `mensajes` | Formulario de contacto (aparece con el primer mensaje) |
 | `pedidos` | Pedidos enviados desde el carrito |
 | `archivos` | Fotos subidas desde el panel (aparece con la primera foto) |
+| `usuarios` | Usuario y contraseña cifrada del panel (aparece al cambiarlos en *Mi usuario*) |
 
 Los datos iniciales están en `src/seed.js`. Solo se cargan cuando una colección está vacía: cambiar ese archivo no modifica una base que ya tiene datos.
 
@@ -144,6 +146,7 @@ Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda m
 | La tienda tarda cerca de un minuto en abrir | Plan gratuito de Render "despertando"; es normal |
 | El panel dice que no está activado | Falta `ADMIN_PASSWORD` en Render, o tiene menos de 8 caracteres |
 | "Demasiados intentos" al entrar al panel | Espera 15 minutos |
+| Olvidé la contraseña del panel | En Atlas, borra el documento `admin` de la colección `usuarios`. El panel vuelve a aceptar el usuario y la contraseña de `ADMIN_USER` y `ADMIN_PASSWORD` (en un minuto como máximo) |
 | En Atlas no veo colecciones | Despliega `Cluster0` con la flecha: la base se llama `ciap` |
 | Cambié algo directamente en Atlas y no se ve | Espera un minuto y recarga: la tienda guarda los datos 60 segundos en memoria |
 | Un producto no aparece | Está marcado como oculto en el panel |
