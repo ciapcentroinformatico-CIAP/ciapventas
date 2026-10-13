@@ -16,7 +16,7 @@ const REINTENTO_MS = 30 * 1000;
 const CACHE_MS = 60 * 1000;
 
 // Secciones que viven en un solo documento de la colección "configuracion"
-const CONFIG_KEYS = ['marca', 'contacto', 'moneda', 'estadisticas', 'beneficios', 'valores'];
+const CONFIG_KEYS = ['marca', 'contacto', 'moneda', 'portada', 'nosotros', 'estadisticas', 'beneficios', 'valores'];
 const SIN_ID = { projection: { _id: 0 } };
 
 let conexion = null;       // promesa de la base de datos (o null si falló)
@@ -86,14 +86,23 @@ async function tienda() {
     if (cache.datos && Date.now() < cache.hasta) return cache.datos;
 
     const base = await db();
-    if (!base) return seed;
+    if (!base) return cache.datos || seed;
 
-    const [config, categorias, productos, servicios] = await Promise.all([
-        base.collection('configuracion').findOne({ _id: 'tienda' }, SIN_ID),
-        visibles(base, 'categorias'),
-        visibles(base, 'productos'),
-        visibles(base, 'servicios'),
-    ]);
+    let config, categorias, productos, servicios;
+    try {
+        [config, categorias, productos, servicios] = await Promise.all([
+            base.collection('configuracion').findOne({ _id: 'tienda' }, SIN_ID),
+            visibles(base, 'categorias'),
+            visibles(base, 'productos'),
+            visibles(base, 'servicios'),
+        ]);
+    } catch (err) {
+        // Si Atlas deja de responder, la tienda sigue abierta con lo último que se leyó
+        console.error('[db] No se pudo leer la tienda:', err.message);
+        estado = 'error';
+        return cache.datos || seed;
+    }
+    estado = 'conectada';
 
     // Los valores iniciales cubren las claves que falten en la base
     const datos = { categorias, productos, servicios };
@@ -150,4 +159,9 @@ async function crearPedido(items) {
     return { folio, total };
 }
 
-module.exports = { db, tienda, guardarMensaje, crearPedido, PedidoError, estado: () => estado };
+/** Después de un cambio desde el panel, la tienda vuelve a leer la base */
+function limpiarCache() {
+    cache = { datos: null, hasta: 0 };
+}
+
+module.exports = { db, tienda, guardarMensaje, crearPedido, limpiarCache, PedidoError, CONFIG_KEYS, estado: () => estado };

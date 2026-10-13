@@ -1,6 +1,6 @@
 # CIAP Informática
 
-Tienda de informática con catálogo de productos, servicios técnicos, carrito y pedidos por WhatsApp.
+Tienda de informática con catálogo de productos, servicios técnicos, carrito, pedidos por WhatsApp y panel de administración.
 
 - **Código:** GitHub
 - **Hosting:** Render (Node.js, plan gratuito)
@@ -43,33 +43,54 @@ El `.gitignore` ya excluye `node_modules/`, el archivo `.env` y la carpeta de re
 
 1. Entra a [render.com](https://render.com) con tu cuenta de GitHub.
 2. **New → Blueprint** → elige el repositorio `ciap-informatica`. Render lee `render.yaml` y crea el servicio.
-3. Te pedirá el valor de **`MONGODB_URI`**: pega la cadena del paso 1 (con la contraseña).
+3. Te pedirá dos valores:
+   - **`MONGODB_URI`**: la cadena del paso 1 (con la contraseña).
+   - **`ADMIN_PASSWORD`**: la contraseña del panel de administración, de 8 caracteres o más. Elige una distinta a la de la base de datos.
 4. Espera a que termine el despliegue y abre `https://ciap-informatica.onrender.com` (Render puede añadir un sufijo al nombre si ya está en uso).
 5. Comprueba la conexión en `https://TU-SITIO.onrender.com/healthz`. Debe responder `"db":"conectada"`.
 
-Cada `git push` vuelve a publicar la tienda automáticamente.
+Si creaste el servicio a mano (**New → Web Service**) en lugar de con Blueprint, añade esas variables en la pestaña **Environment**, junto con `MONGODB_DB` = `ciap` y `NODE_VERSION` = `22`.
+
+Cada `git push` a la rama que Render tiene configurada vuelve a publicar la tienda automáticamente.
 
 > **Plan gratuito de Render:** el sitio se "duerme" tras 15 minutos sin visitas y la siguiente visita tarda cerca de un minuto en despertar. Los datos no se pierden: están en Atlas.
 
-## Editar productos, servicios y datos de la tienda
+## Panel de administración
 
-Los datos se editan en Atlas: **Database → Browse Collections → base `ciap`**. Los cambios se ven en la tienda en un minuto como máximo.
+Entra en `https://TU-SITIO.onrender.com/admin/` con el usuario `admin` y la contraseña que pusiste en `ADMIN_PASSWORD`.
 
-| Colección | Contenido | Campos |
-|---|---|---|
-| `productos` | Catálogo | `id` (número único), `nombre`, `categoria` (slug de `categorias`), `precio`, `precioAntes`, `etiqueta`, `destacado`, `stock`, `descripcion`, `specs` (lista), `imagen` (URL de la foto, opcional), `activo`, `orden` |
-| `categorias` | Categorías | `slug` (único), `nombre`, `icono`, `activo`, `orden` |
-| `servicios` | Servicios técnicos | `id` (texto único), `nombre`, `icono`, `desde` (precio), `texto`, `incluye` (lista), `activo`, `orden` |
-| `configuracion` | Documento `tienda`: marca, contacto y textos | `marca`, `contacto` (incluye `whatsapp`), `moneda`, `estadisticas`, `beneficios`, `valores` |
-| `mensajes` | Lo que llega del formulario de contacto | `nombre`, `telefono`, `asunto`, `mensaje`, `leido`, `fecha` |
-| `pedidos` | Pedidos enviados desde el carrito | `folio`, `fecha`, `estado`, `items`, `total` |
+| Sección | Qué se hace |
+|---|---|
+| Resumen | Pedidos pendientes, mensajes sin leer y productos agotados |
+| Pedidos | Ver los pedidos del carrito y cambiar su estado: pendiente, confirmado, entregado o cancelado |
+| Mensajes | Leer lo que llega del formulario de contacto y responder por WhatsApp |
+| Productos | Crear, editar, ocultar o borrar. Precio, oferta, stock, características y foto |
+| Categorías | Crear, ordenar u ocultar. No se puede borrar una categoría que tiene productos |
+| Servicios | Crear y editar los servicios técnicos |
+| Datos de la tienda | Marca, WhatsApp, contacto y los textos de la portada y de Nosotros |
 
-- **Ocultar** un producto, categoría o servicio sin borrarlo: pon `activo` en `false`.
-- **WhatsApp de la tienda:** `configuracion → tienda → contacto.whatsapp`, con código de país y solo números (ej. `51987654321`).
-- **Íconos disponibles:** `laptop`, `desktop`, `cpu`, `keyboard`, `wifi`, `printer`, `wrench`, `shield`, `cloud`, `server`, `truck`, `card`, `headset`, `check`.
-- Los datos iniciales están en `src/seed.js`. Solo se cargan cuando una colección está vacía: cambiar ese archivo no modifica una base que ya tiene datos.
+- Los cambios se ven en la tienda al momento.
+- **Fotos:** se suben desde el formulario del producto, se reducen a 1000 px y se guardan en la base de datos, así que no se pierden cuando Render reinicia.
+- **Destacado en la portada:** los productos marcados rotan en la ficha de la página de inicio.
+- **Inventario:** los pedidos no descuentan stock. Quedan como `pendiente`, el cobro se coordina por WhatsApp y el stock se ajusta a mano en el producto.
+- **Seguridad:** tras 5 intentos fallidos el acceso se bloquea 15 minutos, y la sesión dura 8 horas. Cambiar `ADMIN_PASSWORD` cierra todas las sesiones abiertas.
+- Sin `ADMIN_PASSWORD` (o con menos de 8 caracteres) el panel queda desactivado.
 
-Los pedidos **no descuentan inventario**: quedan registrados como `pendiente` y el cobro se coordina por WhatsApp. El `stock` se actualiza a mano en `productos`.
+## Base de datos
+
+Todo vive en la base `ciap` de Atlas (**Database → Browse Collections**, desplegando `Cluster0`). No hace falta tocarla: se administra desde el panel.
+
+| Colección | Contenido |
+|---|---|
+| `productos` | Catálogo |
+| `categorias` | Categorías del catálogo |
+| `servicios` | Servicios técnicos |
+| `configuracion` | Documento `tienda`: marca, contacto y textos |
+| `mensajes` | Formulario de contacto (aparece con el primer mensaje) |
+| `pedidos` | Pedidos enviados desde el carrito |
+| `archivos` | Fotos subidas desde el panel (aparece con la primera foto) |
+
+Los datos iniciales están en `src/seed.js`. Solo se cargan cuando una colección está vacía: cambiar ese archivo no modifica una base que ya tiene datos.
 
 ## Probar en tu computadora
 
@@ -82,7 +103,7 @@ npm start
 
 Abre `http://localhost:3000`.
 
-Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda mensajes ni pedidos. Para conectarla a Atlas, copia `.env.example` como `.env` y pega tu cadena de conexión en `MONGODB_URI`.
+Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda mensajes ni pedidos y el panel no funciona. Para conectarla a Atlas y activar el panel, copia `.env.example` como `.env`, pega tu cadena de conexión en `MONGODB_URI` y escribe una contraseña en `ADMIN_PASSWORD`. El panel queda en `http://localhost:3000/admin/`.
 
 ## Estructura
 
@@ -90,10 +111,13 @@ Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda m
 ├── server.js           Servidor: sirve la tienda y la API
 ├── src/
 │   ├── db.js           Conexión a MongoDB, datos iniciales, mensajes y pedidos
+│   ├── admin.js        API del panel (/api/admin) e imágenes
+│   ├── auth.js         Acceso al panel: sesión y bloqueo por intentos
 │   └── seed.js         Datos iniciales (productos, servicios, marca, contacto)
 ├── public/             La tienda (lo que ve el cliente)
 │   ├── index.html
-│   └── assets/css/styles.css, assets/js/app.js
+│   ├── assets/css/styles.css, assets/js/app.js
+│   └── admin/          Panel de administración (index.html, admin.css, admin.js)
 ├── render.yaml         Configuración del servicio en Render
 ├── .env.example        Plantilla de las variables de entorno
 └── package.json
@@ -104,6 +128,8 @@ Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda m
 | `GET /api/tienda` | Datos de la tienda (productos, categorías, servicios, marca, contacto) |
 | `POST /api/mensajes` | Guarda un mensaje del formulario de contacto |
 | `POST /api/pedidos` | Registra un pedido; los precios y el stock se validan en el servidor |
+| `/api/admin/…` | Panel de administración (requiere sesión) |
+| `GET /media/:id` | Fotos de producto guardadas en la base |
 | `GET /healthz` | Estado del servicio y de la base de datos |
 
 ## Solución de problemas
@@ -113,5 +139,8 @@ Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda m
 | `/healthz` responde `"db":"sin configurar"` | Falta la variable `MONGODB_URI` en Render (**Environment**) |
 | `/healthz` responde `"db":"error"` | Revisa los *Logs* de Render. `bad auth`: usuario o contraseña incorrectos en la cadena. Tiempo de espera agotado: falta `0.0.0.0/0` en *Network Access* de Atlas |
 | La tienda tarda cerca de un minuto en abrir | Plan gratuito de Render "despertando"; es normal |
-| Cambié un producto en Atlas y no se ve | Espera un minuto y recarga: los datos se guardan en memoria 60 segundos |
-| Un producto no aparece | `activo` está en `false`, o su `id` está repetido |
+| El panel dice que no está activado | Falta `ADMIN_PASSWORD` en Render, o tiene menos de 8 caracteres |
+| "Demasiados intentos" al entrar al panel | Espera 15 minutos |
+| En Atlas no veo colecciones | Despliega `Cluster0` con la flecha: la base se llama `ciap` |
+| Cambié algo directamente en Atlas y no se ve | Espera un minuto y recarga: la tienda guarda los datos 60 segundos en memoria |
+| Un producto no aparece | Está marcado como oculto en el panel |

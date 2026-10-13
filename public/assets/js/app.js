@@ -29,6 +29,8 @@
         heart: '<path d="M12 20s-7-4.4-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.6-9 9-9 9z"/>',
         cart: '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12h11L21 7H6"/>',
         menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+        prev: '<path d="m15 5-7 7 7 7"/>',
+        next: '<path d="m9 5 7 7-7 7"/>',
         x: '<path d="M5 5l14 14M19 5L5 19"/>',
         plus: '<path d="M12 5v14M5 12h14"/>',
         minus: '<path d="M5 12h14"/>',
@@ -107,6 +109,15 @@
     function renderStatic() {
         $$('[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
         $$('[data-cfg]').forEach((el) => { el.textContent = T.marca[el.dataset.cfg]; });
+        document.title = `${T.marca.nombre} ${T.marca.subtitulo} · Productos y servicios de tecnología`;
+
+        $('#heroTag').textContent = T.portada.etiqueta;
+        $('#heroTitle').textContent = T.portada.titulo;
+        $('#heroAccent').textContent = T.portada.resaltado;
+        $('#heroText').textContent = T.portada.texto;
+        $('#aboutTitle').textContent = T.nosotros.titulo;
+        // Una línea en blanco separa los párrafos
+        $('#aboutText').innerHTML = String(T.nosotros.texto).split(/\n\s*\n/).filter((p) => p.trim()).map((p) => `<p>${esc(p.trim())}</p>`).join('');
 
         const stats = T.estadisticas.map((s) => `<div><strong>${esc(s.numero)}</strong><span>${esc(s.texto)}</span></div>`).join('');
         $('#heroStats').innerHTML = stats;
@@ -140,10 +151,65 @@
             .map((o) => `<option>${esc(o)}</option>`).join('');
     }
 
+    /* ---------- Producto destacado de la portada ---------- */
+    let featIdx = 0;
+    let featTimer;
+    const descuento = (p) => (p.precioAntes > p.precio ? `<span class="off">-${Math.round((1 - p.precio / p.precioAntes) * 100)}%</span>` : '');
+    const precioHtml = (p) => `${p.precioAntes > p.precio ? `<s>${money(p.precioAntes)}</s>` : ''}<strong>${money(p.precio)}${descuento(p)}</strong>`;
+    const codigo = (p) => '#' + String(p.id).padStart(3, '0');
+
+    function destacados() {
+        const lista = T.productos.filter((p) => p.destacado && p.stock > 0);
+        return lista.length ? lista : T.productos.filter((p) => p.stock > 0).slice(0, 4);
+    }
+
+    function renderFeature(paso = 0) {
+        const lista = destacados();
+        const caja = $('#feature');
+        caja.hidden = lista.length === 0;
+        if (!lista.length) return;
+        featIdx = (featIdx + paso + lista.length) % lista.length;
+        const p = lista[featIdx];
+        const n = (x) => String(x).padStart(2, '0');
+        caja.innerHTML = `
+            <div class="feature-bar">
+                <span>Destacado <b>${n(featIdx + 1)}</b>/${n(lista.length)}</span>
+                ${lista.length > 1 ? `<span class="feature-nav">
+                    <button data-feat="-1" aria-label="Destacado anterior">${icon('prev')}</button>
+                    <button data-feat="1" aria-label="Destacado siguiente">${icon('next')}</button>
+                </span>` : ''}
+            </div>
+            <button class="feature-visual" data-open="${p.id}" aria-label="Ver ${esc(p.nombre)}">
+                ${visual(p)}
+                ${p.etiqueta ? `<span class="tag">${esc(p.etiqueta)}</span>` : ''}
+            </button>
+            <div class="feature-body">
+                <span class="card-cat">${esc(catOf(p).nombre)} <i>${codigo(p)}</i></span>
+                <h2><button data-open="${p.id}">${esc(p.nombre)}</button></h2>
+                <ul class="feature-specs">${p.specs.slice(0, 4).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+                <div class="feature-foot">
+                    <div class="price">${precioHtml(p)}</div>
+                    <button class="btn btn-solid" data-add="${p.id}">Agregar</button>
+                </div>
+            </div>`;
+    }
+
+    // Cambia solo cada 6 s; se detiene si el cursor está encima o si se pide menos movimiento
+    function rotarDestacados() {
+        clearInterval(featTimer);
+        if (destacados().length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        featTimer = setInterval(() => {
+            const caja = $('#feature');
+            if (caja.matches(':hover, :focus-within') || !caja.closest('.view').classList.contains('active')) return;
+            renderFeature(1);
+        }, 6000);
+    }
+
     /* ---------- Servicios ---------- */
     function renderServices() {
-        $('#serviceGrid').innerHTML = T.servicios.map((s) => `
+        $('#serviceGrid').innerHTML = T.servicios.map((s, i) => `
             <article class="panel service">
+                <span class="service-n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
                 <span class="service-ic">${icon(s.icono)}</span>
                 <h3>${esc(s.nombre)}</h3>
                 <p>${esc(s.texto)}</p>
@@ -191,14 +257,11 @@
                     ${agotado ? '<span class="tag tag-out">Agotado</span>' : (p.etiqueta ? `<span class="tag">${esc(p.etiqueta)}</span>` : '')}
                 </button>
                 <div class="card-body">
-                    <span class="card-cat">${esc(cat.nombre)}</span>
+                    <span class="card-cat">${esc(cat.nombre)} <i>${codigo(p)}</i></span>
                     <h3><button data-open="${p.id}">${esc(p.nombre)}</button></h3>
                     <p class="card-specs">${p.specs.slice(0, 3).map(esc).join(' · ')}</p>
                     <div class="card-foot">
-                        <div class="price">
-                            ${p.precioAntes ? `<s>${money(p.precioAntes)}</s>` : ''}
-                            <strong>${money(p.precio)}</strong>
-                        </div>
+                        <div class="price">${precioHtml(p)}</div>
                         <button class="add" data-add="${p.id}" ${agotado ? 'disabled' : ''} aria-label="Agregar ${esc(p.nombre)} al carrito">${icon('plus')}</button>
                     </div>
                 </div>
@@ -232,14 +295,11 @@
             <button class="icon-btn modal-close" data-close aria-label="Cerrar">${icon('x')}</button>
             <div class="modal-thumb">${visual(p)}</div>
             <div class="modal-info">
-                <span class="card-cat">${esc(cat.nombre)}</span>
+                <span class="card-cat">${esc(cat.nombre)} <i>${codigo(p)}</i></span>
                 <h2>${esc(p.nombre)}</h2>
                 <p>${esc(p.descripcion)}</p>
                 <ul class="spec-list">${p.specs.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>
-                <div class="price price-lg">
-                    ${p.precioAntes ? `<s>${money(p.precioAntes)}</s>` : ''}
-                    <strong>${money(p.precio)}</strong>
-                </div>
+                <div class="price price-lg">${precioHtml(p)}</div>
                 <p class="stock ${agotado ? 'out' : ''}">${agotado ? 'Agotado por ahora' : `En stock: ${p.stock} unidades`}</p>
                 <div class="btn-row">
                     <button class="btn btn-solid" data-add="${p.id}" ${agotado ? 'disabled' : ''}>Agregar al carrito</button>
@@ -410,10 +470,11 @@
 
         // Acciones delegadas: sirven para las tarjetas, el detalle y el carrito
         document.addEventListener('click', (e) => {
-            const el = e.target.closest('[data-add],[data-fav],[data-open],[data-close],[data-qty],[data-remove],[data-service]');
+            const el = e.target.closest('[data-add],[data-fav],[data-open],[data-close],[data-qty],[data-remove],[data-service],[data-feat]');
             if (!el) return;
             const d = el.dataset;
-            if (d.add) addToCart(d.add);
+            if (d.feat) { renderFeature(Number(d.feat)); rotarDestacados(); }
+            else if (d.add) addToCart(d.add);
             else if (d.fav) toggleFav(d.fav);
             else if (d.open) openProduct(d.open);
             else if ('close' in d) $('#productModal').close();
@@ -467,6 +528,8 @@
         catMap = Object.fromEntries(T.categorias.map((c) => [c.slug, c]));
 
         renderStatic();
+        renderFeature();
+        rotarDestacados();
         renderServices();
         renderChips();
         renderProducts();

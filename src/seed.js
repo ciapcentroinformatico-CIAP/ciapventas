@@ -20,6 +20,18 @@ module.exports = {
 
     moneda: 'S/',
 
+    portada: {
+        etiqueta: 'Tecnología y soporte en un solo lugar',
+        titulo: 'Equipos que rinden.',
+        resaltado: 'Servicio que responde.',
+        texto: 'Laptops, computadoras, componentes y redes con garantía real, más un taller técnico propio para instalar, reparar y mantener todo lo que vendemos.',
+    },
+
+    nosotros: {
+        titulo: 'Más de una década acercando la tecnología a las personas',
+        texto: 'Somos una tienda de informática con taller propio. Empezamos reparando computadoras y hoy equipamos hogares, estudiantes y empresas con productos originales y asesoría honesta.\n\nNo vendemos por vender: primero entendemos para qué necesitas el equipo y luego te recomendamos la opción que mejor rinde para tu presupuesto.',
+    },
+
     estadisticas: [
         { numero: '12+', texto: 'años de experiencia' },
         { numero: '8 mil', texto: 'equipos atendidos' },

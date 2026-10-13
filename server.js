@@ -10,6 +10,7 @@ try { process.loadEnvFile(); } catch (e) { /* sin archivo .env */ }
 const path = require('path');
 const express = require('express');
 const datos = require('./src/db');
+const admin = require('./src/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -90,6 +91,9 @@ app.post('/api/pedidos', limitar, async (req, res, next) => {
         next(err);
     }
 });
+
+app.use('/api/admin', admin.router);
+app.get('/media/:id', admin.media);
 
 app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'Ruta no encontrada' }));
 

@@ -18,3 +18,8 @@ services:
       # La cadena de conexión de Atlas (con la contraseña) se escribe en el panel de Render, no aquí
       - key: MONGODB_URI
         sync: false
+      # Acceso al panel (/admin/). La contraseña (8 caracteres o más) se escribe en el panel de Render
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false

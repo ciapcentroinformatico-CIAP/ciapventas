@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CIAP Informática · Productos y servicios de tecnología</title>
     <meta name="description" content="Tienda de informática: laptops, computadoras, componentes, periféricos y redes. Servicio técnico, armado de PC e instalación de redes.">
-    <meta name="theme-color" content="#0b1f3a">
+    <meta name="theme-color" content="#060f20">
 
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%231463ff' d='M0 0h24l8 8v24H8l-8-8z'/%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.4' d='M11 11h10v10H11zM14 5v6M18 5v6M14 21v6M18 21v6M5 14h6M5 18h6M21 14h6M21 18h6'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
@@ -46,20 +47,18 @@
     <section class="view view-home" data-view="inicio">
         <div class="home-main wrap">
             <div class="hero-copy">
-                <span class="eyebrow">Tecnología y soporte en un solo lugar</span>
-                <h1>Equipos que rinden.<br><em>Servicio que responde.</em></h1>
-                <p>Laptops, computadoras, componentes y redes con garantía real, más un taller técnico propio para instalar, reparar y mantener todo lo que vendemos.</p>
+                <span class="eyebrow" id="heroTag"></span>
+                <h1><span id="heroTitle"></span><em id="heroAccent"></em></h1>
+                <p id="heroText"></p>
                 <div class="btn-row">
                     <a href="#productos" class="btn btn-solid">Ver productos</a>
                     <a href="#servicios" class="btn btn-line">Nuestros servicios</a>
                 </div>
                 <div class="stats" id="heroStats"></div>
             </div>
-            <div class="cat-tiles" id="catTiles"></div>
+            <div class="feature" id="feature" aria-label="Producto destacado"></div>
         </div>
-        <div class="benefits">
-            <div class="wrap benefits-row" id="benefits"></div>
-        </div>
+        <div class="cat-strip"><div class="wrap cat-tiles" id="catTiles"></div></div>
     </section>
 
     <!-- ========== PRODUCTOS ========== -->
@@ -104,15 +103,17 @@
 
     <!-- ========== NOSOTROS ========== -->
     <section class="view" data-view="nosotros">
-        <div class="wrap pad about">
-            <div>
-                <span class="eyebrow">Nosotros</span>
-                <h2>Más de una década acercando la tecnología a las personas</h2>
-                <p>Somos una tienda de informática con taller propio. Empezamos reparando computadoras y hoy equipamos hogares, estudiantes y empresas con productos originales y asesoría honesta.</p>
-                <p>No vendemos por vender: primero entendemos para qué necesitas el equipo y luego te recomendamos la opción que mejor rinde para tu presupuesto.</p>
-                <div class="stats" id="aboutStats"></div>
+        <div class="wrap pad about-wrap">
+            <div class="about">
+                <div>
+                    <span class="eyebrow">Nosotros</span>
+                    <h2 id="aboutTitle"></h2>
+                    <div id="aboutText"></div>
+                    <div class="stats" id="aboutStats"></div>
+                </div>
+                <div class="values" id="values"></div>
             </div>
-            <div class="values" id="values"></div>
+            <div class="benefits-row" id="benefits"></div>
         </div>
     </section>
 
