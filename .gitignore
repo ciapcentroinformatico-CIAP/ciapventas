@@ -1,0 +1,19 @@
+# Dependencias
+node_modules/
+
+# Datos de conexión (contienen la contraseña de MongoDB): nunca se suben
+.env
+.env.*
+!.env.example
+
+# Registros
+*.log
+
+# Proyecto de referencia (KYRIOS original), no forma parte de la tienda
+/CIAP/
+/CIAP.zip
+
+# Sistema y editor
+.DS_Store
+Thumbs.db
+.vscode/

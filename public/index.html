@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIAP Informática · Productos y servicios de tecnología</title>
+    <meta name="description" content="Tienda de informática: laptops, computadoras, componentes, periféricos y redes. Servicio técnico, armado de PC e instalación de redes.">
+    <meta name="theme-color" content="#0b1f3a">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ========== BARRA SUPERIOR ========== -->
+<header class="top">
+    <a class="brand" href="#inicio" aria-label="CIAP inicio">
+        <span class="brand-mark" data-icon="cpu"></span>
+        <span class="brand-text">
+            <span class="brand-name" data-cfg="nombre">CIAP</span>
+            <span class="brand-sub" data-cfg="subtitulo">Informática</span>
+        </span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Principal">
+        <a href="#inicio" data-link="inicio">Inicio</a>
+        <a href="#productos" data-link="productos">Productos</a>
+        <a href="#servicios" data-link="servicios">Servicios</a>
+        <a href="#nosotros" data-link="nosotros">Nosotros</a>
+        <a href="#contacto" data-link="contacto">Contacto</a>
+    </nav>
+
+    <div class="actions">
+        <button class="icon-btn" id="btnSearch" title="Buscar" aria-label="Buscar"><span data-icon="search"></span></button>
+        <button class="icon-btn" id="btnFavs" title="Favoritos" aria-label="Favoritos"><span data-icon="heart"></span><span class="count" data-fav-count hidden>0</span></button>
+        <button class="icon-btn" id="btnCart" title="Carrito" aria-label="Carrito"><span data-icon="cart"></span><span class="count" data-cart-count hidden>0</span></button>
+        <button class="icon-btn burger" id="btnMenu" aria-label="Menú" aria-controls="nav" aria-expanded="false"><span data-icon="menu"></span></button>
+    </div>
+</header>
+
+<main class="stage">
+
+    <!-- ========== INICIO ========== -->
+    <section class="view view-home" data-view="inicio">
+        <div class="home-main wrap">
+            <div class="hero-copy">
+                <span class="eyebrow">Tecnología y soporte en un solo lugar</span>
+                <h1>Equipos que rinden.<br><em>Servicio que responde.</em></h1>
+                <p>Laptops, computadoras, componentes y redes con garantía real, más un taller técnico propio para instalar, reparar y mantener todo lo que vendemos.</p>
+                <div class="btn-row">
+                    <a href="#productos" class="btn btn-solid">Ver productos</a>
+                    <a href="#servicios" class="btn btn-line">Nuestros servicios</a>
+                </div>
+                <div class="stats" id="heroStats"></div>
+            </div>
+            <div class="cat-tiles" id="catTiles"></div>
+        </div>
+        <div class="benefits">
+            <div class="wrap benefits-row" id="benefits"></div>
+        </div>
+    </section>
+
+    <!-- ========== PRODUCTOS ========== -->
+    <section class="view view-catalog" data-view="productos">
+        <div class="catalog-head wrap">
+            <div class="view-title">
+                <h2>Catálogo de productos</h2>
+                <span class="muted" id="resultCount"></span>
+            </div>
+            <div class="toolbar">
+                <label class="search-box">
+                    <span data-icon="search"></span>
+                    <input type="search" id="searchInput" placeholder="Buscar laptop, SSD, router…" autocomplete="off" aria-label="Buscar productos">
+                </label>
+                <select id="sortSelect" class="input" aria-label="Ordenar">
+                    <option value="destacado">Destacados</option>
+                    <option value="precio-asc">Precio: menor a mayor</option>
+                    <option value="precio-desc">Precio: mayor a menor</option>
+                    <option value="nombre">Nombre A–Z</option>
+                </select>
+            </div>
+            <div class="chips" id="chips" role="tablist" aria-label="Categorías"></div>
+        </div>
+        <div class="catalog-body">
+            <div class="wrap">
+                <div class="grid" id="productGrid"></div>
+                <p class="empty" id="emptyState" hidden>No encontramos productos con ese filtro.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== SERVICIOS ========== -->
+    <section class="view" data-view="servicios">
+        <div class="wrap pad">
+            <div class="view-title">
+                <h2>Servicios técnicos</h2>
+                <span class="muted">Diagnóstico sin costo si realizas el servicio con nosotros.</span>
+            </div>
+            <div class="services" id="serviceGrid"></div>
+        </div>
+    </section>
+
+    <!-- ========== NOSOTROS ========== -->
+    <section class="view" data-view="nosotros">
+        <div class="wrap pad about">
+            <div>
+                <span class="eyebrow">Nosotros</span>
+                <h2>Más de una década acercando la tecnología a las personas</h2>
+                <p>Somos una tienda de informática con taller propio. Empezamos reparando computadoras y hoy equipamos hogares, estudiantes y empresas con productos originales y asesoría honesta.</p>
+                <p>No vendemos por vender: primero entendemos para qué necesitas el equipo y luego te recomendamos la opción que mejor rinde para tu presupuesto.</p>
+                <div class="stats" id="aboutStats"></div>
+            </div>
+            <div class="values" id="values"></div>
+        </div>
+    </section>
+
+    <!-- ========== CONTACTO ========== -->
+    <section class="view" data-view="contacto">
+        <div class="wrap pad contact">
+            <div>
+                <span class="eyebrow">Contacto</span>
+                <h2>Cuéntanos qué necesitas</h2>
+                <p class="muted">Cotizaciones, consultas de stock o soporte técnico. Te respondemos el mismo día.</p>
+                <ul class="contact-list" id="contactList"></ul>
+            </div>
+            <form class="panel form" id="contactForm">
+                <div class="field"><label for="fNombre">Nombre</label><input class="input" id="fNombre" name="nombre" required maxlength="100"></div>
+                <div class="field"><label for="fTelefono">Teléfono</label><input class="input" id="fTelefono" name="telefono" type="tel" maxlength="30"></div>
+                <div class="field full"><label for="fAsunto">Asunto</label><select class="input" id="fAsunto" name="asunto"></select></div>
+                <div class="field full"><label for="fMensaje">Mensaje</label><textarea class="input" id="fMensaje" name="mensaje" rows="4" required maxlength="1500"></textarea></div>
+                <input type="text" name="website" class="trap" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <div class="full"><button class="btn btn-solid">Enviar por WhatsApp</button></div>
+            </form>
+        </div>
+    </section>
+</main>
+
+<!-- ========== CARRITO LATERAL ========== -->
+<div class="backdrop" id="backdrop" hidden></div>
+<aside class="drawer" id="cartDrawer" aria-labelledby="cartTitle" aria-hidden="true">
+    <div class="drawer-head">
+        <h3 id="cartTitle">Tu carrito</h3>
+        <button class="icon-btn" id="btnCartClose" aria-label="Cerrar"><span data-icon="x"></span></button>
+    </div>
+    <div class="drawer-body" id="cartItems"></div>
+    <div class="drawer-foot" id="cartFoot">
+        <div class="total-row"><span>Subtotal</span><strong id="cartSubtotal">S/ 0.00</strong></div>
+        <button class="btn btn-solid w-100" id="btnCheckout">Pedir por WhatsApp</button>
+    </div>
+</aside>
+
+<!-- ========== DETALLE DE PRODUCTO ========== -->
+<dialog class="modal" id="productModal" aria-label="Detalle del producto"></dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>

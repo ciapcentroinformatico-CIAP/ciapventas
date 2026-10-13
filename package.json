@@ -1,0 +1,18 @@
+{
+  "name": "ciap-informatica",
+  "version": "1.0.0",
+  "description": "Tienda de informática CIAP: productos, servicios y pedidos por WhatsApp",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0"
+  }
+}

@@ -1,0 +1,20 @@
+# CIAP Informática - Despliegue en Render (plan gratuito) desde GitHub.
+# En Render: New → Blueprint → elige este repositorio.
+services:
+  - type: web
+    name: ciap-informatica
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: MONGODB_DB
+        value: ciap
+      # La cadena de conexión de Atlas (con la contraseña) se escribe en el panel de Render, no aquí
+      - key: MONGODB_URI
+        sync: false
