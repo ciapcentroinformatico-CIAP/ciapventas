@@ -1,12 +1,13 @@
 /* CIAP Informática - Panel de administración */
 
 :root {
-    --ink: #071226;
-    --navy: #0c1d3c;
-    --blue: #1463ff;
-    --blue-dark: #0f4fd0;
-    --cyan: #19d3ff;
-    --paper: #eef3fb;
+    /* Paleta del logo */
+    --ink: #151a3d;
+    --navy: #1c2468;
+    --blue: #26308f;
+    --blue-dark: #1b236d;
+    --cyan: #00adef;
+    --paper: #f1f3f9;
     --white: #fff;
     --text: #0f1e38;
     --muted: #5a6c88;
@@ -14,9 +15,9 @@
     --ok: #12804c;
     --warn: #b26a00;
     --danger: #c9304a;
-    --font: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --head: 'Chakra Petch', var(--font);
-    --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+    --font: 'Open Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --head: 'Poppins', var(--font);
+    --mono: var(--font);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -50,7 +51,8 @@ button { cursor: pointer; }
 input, select, textarea {
     width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 4px; background: var(--white);
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(20, 99, 255, .15); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(38, 48, 143, .15); }
+input[type="color"] { height: 42px; padding: 4px; cursor: pointer; }
 textarea { resize: vertical; min-height: 84px; }
 input[type="checkbox"] { width: 18px; height: 18px; padding: 0; accent-color: var(--blue); flex: none; }
 label { display: block; font-size: 13px; font-weight: 600; }
@@ -72,13 +74,17 @@ label.check { display: flex; align-items: center; gap: 9px; font-weight: 500; fo
     background: var(--white); border-radius: 6px; border-top: 4px solid var(--blue);
 }
 .login-card h1 { font-size: 26px; margin-bottom: 6px; }
+.login-logo { width: auto; height: 96px; justify-self: center; }
+.login-card .mono-label, .login-card h1 { text-align: center; }
 .aviso { padding: 10px 12px; border-radius: 4px; background: #fff4e0; color: #7a4a00; font-size: 14px; }
 .aviso.error { background: #fdecef; color: var(--danger); }
 
 /* ---------- Estructura ---------- */
 .app { display: grid; grid-template-columns: 230px minmax(0, 1fr); min-height: 100%; }
 .side { display: flex; flex-direction: column; background: var(--ink); color: #c5d3ea; position: sticky; top: 0; height: 100vh; height: 100dvh; }
-.side-brand { padding: 22px 22px 18px; font-family: var(--head); font-size: 24px; font-weight: 700; color: var(--white); letter-spacing: .04em; }
+.side-brand { display: flex; align-items: center; gap: 12px; padding: 18px 20px 16px; font-family: var(--head); font-size: 22px; font-weight: 700; line-height: 1.1; color: var(--white); }
+/* El logo es azul: sobre el fondo oscuro del menú va dentro de una placa blanca */
+.side-brand img { width: 46px; height: 46px; padding: 4px; border-radius: 8px; background: var(--white); object-fit: contain; }
 .side-brand span { display: block; font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: .2em; text-transform: uppercase; color: var(--cyan); }
 .side nav { display: grid; gap: 2px; padding: 0 10px; overflow-y: auto; }
 .side nav button {
@@ -87,7 +93,7 @@ label.check { display: flex; align-items: center; gap: 9px; font-weight: 500; fo
     background: none; color: inherit; text-align: left; font-size: 14.5px;
 }
 .side nav button:hover { background: rgba(255, 255, 255, .06); color: var(--white); }
-.side nav button.active { background: rgba(20, 99, 255, .22); border-left-color: var(--cyan); color: var(--white); font-weight: 600; }
+.side nav button.active { background: rgba(0, 173, 239, .18); border-left-color: var(--cyan); color: var(--white); font-weight: 600; }
 .side nav b { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: var(--cyan); color: var(--ink); font-family: var(--mono); font-size: 11px; text-align: center; }
 .solo-movil { display: none !important; }
 .side-foot { margin-top: auto; display: grid; gap: 6px; padding: 16px 22px 20px; border-top: 1px solid rgba(255, 255, 255, .1); font-size: 13.5px; }
@@ -146,7 +152,15 @@ select.estado { width: auto; padding: 5px 8px; font-size: 13px; }
 .caja { background: var(--white); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; margin-bottom: 18px; }
 .caja h2 { font-size: 17px; margin-bottom: 14px; }
 .foto { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
-.foto img, .foto .mini-vacio { width: 84px; height: 84px; border-radius: 4px; object-fit: cover; flex: none; }
+.foto img, .foto .mini-vacio { width: 84px; height: 84px; border-radius: 4px; object-fit: contain; background: var(--paper); flex: none; }
+.sub-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+.caja-ayuda { margin: -8px 0 14px; font-size: 13.5px; color: var(--muted); }
+
+/* Listas editables: una fila por elemento */
+.lista { display: grid; gap: 8px; margin-bottom: 10px; }
+.fila { display: grid; gap: 8px; align-items: center; }
+.fila-estadisticas { grid-template-columns: 150px 1fr auto; }
+.fila-valores, .fila-beneficios { grid-template-columns: 150px 220px 1fr auto; }
 .foto-acc { display: flex; flex-wrap: wrap; gap: 8px; }
 .barra { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 10px; padding: 14px 0; background: linear-gradient(transparent, var(--paper) 30%); }
 
@@ -181,5 +195,8 @@ select.estado { width: auto; padding: 5px 8px; font-size: 13px; }
     .solo-movil { display: flex !important; }
     .main { padding: 20px 16px 40px; }
     .form { grid-template-columns: 1fr; }
+    .fila { grid-template-columns: 1fr !important; padding: 10px; border: 1px solid var(--line); border-radius: 4px; }
+    .side-brand img { width: 34px; height: 34px; }
+    .side-brand { padding: 8px 12px; }
     .head h1 { font-size: 22px; }
 }

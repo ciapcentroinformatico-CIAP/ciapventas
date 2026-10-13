@@ -16,7 +16,7 @@ const REINTENTO_MS = 30 * 1000;
 const CACHE_MS = 60 * 1000;
 
 // Secciones que viven en un solo documento de la colección "configuracion"
-const CONFIG_KEYS = ['marca', 'contacto', 'moneda', 'portada', 'nosotros', 'estadisticas', 'beneficios', 'valores'];
+const CONFIG_KEYS = ['marca', 'colores', 'contacto', 'moneda', 'portada', 'textos', 'seo', 'nosotros', 'estadisticas', 'beneficios', 'valores'];
 const SIN_ID = { projection: { _id: 0 } };
 
 let conexion = null;       // promesa de la base de datos (o null si falló)
@@ -78,6 +78,23 @@ async function inicializar(base) {
 
 /* ---------- Lectura ---------- */
 
+const esGrupo = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * Configuración completa: lo guardado en la base sobre los valores iniciales.
+ * Los grupos (marca, contacto…) se mezclan campo a campo, así una base antigua
+ * recibe los campos nuevos sin perder lo que ya tenía.
+ */
+function configuracion(guardada) {
+    const out = {};
+    for (const k of CONFIG_KEYS) {
+        const v = guardada ? guardada[k] : undefined;
+        if (esGrupo(seed[k])) out[k] = { ...seed[k], ...(esGrupo(v) ? v : {}) };
+        else out[k] = v ?? seed[k];
+    }
+    return out;
+}
+
 const visibles = (base, nombre) =>
     base.collection(nombre).find({ activo: { $ne: false } }, SIN_ID).sort({ orden: 1, id: 1 }).toArray();
 
@@ -104,9 +121,7 @@ async function tienda() {
     }
     estado = 'conectada';
 
-    // Los valores iniciales cubren las claves que falten en la base
-    const datos = { categorias, productos, servicios };
-    for (const k of CONFIG_KEYS) datos[k] = (config && config[k]) ?? seed[k];
+    const datos = { ...configuracion(config), categorias, productos, servicios };
 
     cache = { datos, hasta: Date.now() + CACHE_MS };
     return datos;
@@ -164,4 +179,4 @@ function limpiarCache() {
     cache = { datos: null, hasta: 0 };
 }
 
-module.exports = { db, tienda, guardarMensaje, crearPedido, limpiarCache, PedidoError, CONFIG_KEYS, estado: () => estado };
+module.exports = { db, tienda, configuracion, guardarMensaje, crearPedido, limpiarCache, PedidoError, estado: () => estado };

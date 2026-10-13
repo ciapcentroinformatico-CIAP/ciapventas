@@ -6,6 +6,7 @@
 
 const crypto = require('crypto');
 const express = require('express');
+const sharp = require('sharp');
 const { Binary, ObjectId } = require('mongodb');
 const datos = require('./db');
 const auth = require('./auth');
@@ -28,11 +29,12 @@ function slug(s) {
         .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'item';
 }
 
-// Solo se aceptan imágenes propias (/media/…) o enlaces https
+// Solo se aceptan imágenes subidas (/media/…), las que trae la tienda (assets/img/…) o enlaces https
 const imagen = (v) => {
     const s = texto(v, 300);
-    return /^\/media\/[a-f0-9]{24}$/.test(s) || /^https:\/\/[^\s"'<>]+$/.test(s) ? s : '';
+    return /^\/media\/[a-f0-9]{24}$/.test(s) || /^assets\/img\/[\w.-]+$/.test(s) || /^https:\/\/[^\s"'<>]+$/.test(s) ? s : '';
 };
+const color = (v, defecto) => (/^#[0-9a-f]{6}$/i.test(String(v)) ? String(v).toLowerCase() : defecto);
 
 /** Campos permitidos de cada colección: lo que no está aquí se descarta */
 const LIMPIAR = {
@@ -78,23 +80,32 @@ const objetos = (v, campos, maxItems) =>
 
 function limpiarConfiguracion(b) {
     const g = (grupo) => (b && typeof b[grupo] === 'object' && b[grupo]) || {};
+    const campos = (grupo, limites) => Object.fromEntries(Object.entries(limites).map(([k, max]) => [k, texto(g(grupo)[k], max)]));
     return {
-        marca: { nombre: texto(g('marca').nombre, 40) || seed.marca.nombre, subtitulo: texto(g('marca').subtitulo, 40) },
+        marca: {
+            nombre: texto(g('marca').nombre, 40) || seed.marca.nombre,
+            subtitulo: texto(g('marca').subtitulo, 40),
+            logo: imagen(g('marca').logo) || seed.marca.logo,
+        },
+        colores: {
+            primario: color(g('colores').primario, seed.colores.primario),
+            acento: color(g('colores').acento, seed.colores.acento),
+        },
         contacto: {
             whatsapp: texto(g('contacto').whatsapp, 20).replace(/\D/g, ''),
-            telefono: texto(g('contacto').telefono, 40),
-            email: texto(g('contacto').email, 120),
-            direccion: texto(g('contacto').direccion, 200),
-            horario: texto(g('contacto').horario, 100),
+            ...campos('contacto', { telefono: 40, email: 120, direccion: 200, horario: 100 }),
         },
         moneda: texto(b.moneda, 6) || seed.moneda,
         portada: {
-            etiqueta: texto(g('portada').etiqueta, 80),
-            titulo: texto(g('portada').titulo, 60),
-            resaltado: texto(g('portada').resaltado, 60),
-            texto: texto(g('portada').texto, 400),
+            ...campos('portada', { etiqueta: 80, titulo: 60, resaltado: 60, texto: 400 }),
+            imagen: imagen(g('portada').imagen),
         },
-        nosotros: { titulo: texto(g('nosotros').titulo, 120), texto: texto(g('nosotros').texto, 1500) },
+        textos: campos('textos', {
+            envio: 80, buscador: 60, boton1: 30, boton2: 30,
+            servicios_titulo: 60, servicios_texto: 160, contacto_titulo: 80, contacto_texto: 240,
+        }),
+        seo: campos('seo', { titulo: 120, descripcion: 300 }),
+        nosotros: campos('nosotros', { titulo: 120, texto: 1500 }),
         estadisticas: objetos(b.estadisticas, [['numero', 12], ['texto', 40]], 4),
         beneficios: objetos(b.beneficios, [['icono', 30], ['titulo', 40], ['texto', 80]], 4),
         valores: objetos(b.valores, [['icono', 30], ['titulo', 60], ['texto', 240]], 4),
@@ -139,10 +150,8 @@ router.get('/datos', ruta(async (req, res) => {
         b.collection('pedidos').find({}, SIN_ID).sort({ fecha: -1 }).limit(300).toArray(),
         b.collection('mensajes').find({}).sort({ fecha: -1 }).limit(300).toArray(),
     ]);
-    const configuracion = {};
-    for (const k of datos.CONFIG_KEYS) configuracion[k] = (config && config[k]) ?? seed[k];
     res.json({
-        ok: true, configuracion, categorias, productos, servicios, pedidos,
+        ok: true, configuracion: datos.configuracion(config), categorias, productos, servicios, pedidos,
         mensajes: mensajes.map(({ _id, ...m }) => ({ id: String(_id), ...m })),
     });
 }));
@@ -260,14 +269,26 @@ const FIRMAS = [
     ['image/webp', (b) => b.subarray(0, 4).toString('latin1') === 'RIFF' && b.subarray(8, 12).toString('latin1') === 'WEBP'],
 ];
 
-router.post('/imagenes', express.raw({ type: FIRMAS.map((f) => f[0]), limit: '2mb' }), ruta(async (req, res) => {
+router.post('/imagenes', express.raw({ type: FIRMAS.map((f) => f[0]), limit: '8mb' }), ruta(async (req, res) => {
     const bytes = req.body;
     // Se comprueba el contenido real del archivo, no lo que dice el navegador
     const firma = Buffer.isBuffer(bytes) && bytes.length > 12 ? FIRMAS.find((f) => f[1](bytes)) : null;
     if (!firma) return res.status(422).json({ ok: false, error: 'Formato no permitido. Usa JPG, PNG o WEBP.' });
+
+    // Toda imagen se guarda en WebP y como máximo a 1400 px: pesa mucho menos y conserva la transparencia
+    let webp;
+    try {
+        webp = await sharp(bytes, { limitInputPixels: 50e6 })
+            .rotate() // respeta la orientación de las fotos de teléfono
+            .resize({ width: 1400, height: 1400, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: 82 })
+            .toBuffer();
+    } catch (err) {
+        return res.status(422).json({ ok: false, error: 'No se pudo leer la imagen. Prueba con otro archivo.' });
+    }
     const _id = crypto.randomBytes(12).toString('hex');
-    await req.base.collection('archivos').insertOne({ _id, tipo: firma[0], tamano: bytes.length, datos: new Binary(bytes), fecha: new Date() });
-    res.json({ ok: true, url: `/media/${_id}` });
+    await req.base.collection('archivos').insertOne({ _id, tipo: 'image/webp', tamano: webp.length, datos: new Binary(webp), fecha: new Date() });
+    res.json({ ok: true, url: `/media/${_id}`, original: bytes.length, tamano: webp.length });
 }));
 
 /** Sirve una imagen guardada en la base (ruta pública /media/:id) */

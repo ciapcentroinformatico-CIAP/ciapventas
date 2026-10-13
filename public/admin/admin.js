@@ -9,6 +9,9 @@
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+    // Las imágenes que trae la tienda (assets/img/…) se ven desde /admin/ un nivel más arriba
+    const src = (u) => esc(String(u).startsWith('assets/') ? '../' + u : u);
+
     let D = null;            // todos los datos del panel
     let vista = 'resumen';
 
@@ -167,7 +170,7 @@
         productos() {
             const cats = Object.fromEntries(D.categorias.map((c) => [c.slug, c.nombre]));
             const filas = D.productos.map((p) => `<tr class="${p.activo === false ? 'fila-oculta' : ''}">
-                <td>${p.imagen ? `<img class="mini" src="${esc(p.imagen)}" alt="">` : '<div class="mini-vacio"></div>'}</td>
+                <td>${p.imagen ? `<img class="mini" src="${src(p.imagen)}" alt="">` : '<div class="mini-vacio"></div>'}</td>
                 <td><strong>${esc(p.nombre)}</strong><small>${esc(cats[p.categoria] || 'Sin categoría')}${p.destacado ? ' · Destacado' : ''}</small></td>
                 <td class="num">${money(p.precio)}</td>
                 <td class="num">${p.stock > 0 ? esc(p.stock) : '<span class="pill bad">Agotado</span>'}</td>
@@ -203,42 +206,87 @@
 
         tienda() {
             const c = D.configuracion;
-            const lineas = (arr, campos) => (arr || []).map((o) => campos.map((k) => o[k] || '').join(' | ')).join('\n');
-            return cabecera('Datos de la tienda', 'Marca, contacto y textos que se ven en la tienda.') + `
+            const txt = (nombre, etiqueta, valor, max, extra = '') =>
+                `<label${extra.includes('full') ? ' class="full"' : ''}>${etiqueta}<input name="${nombre}" value="${esc(valor)}" maxlength="${max}"${extra.includes('req') ? ' required' : ''}></label>`;
+            const area = (nombre, etiqueta, valor, max, filas = 3) =>
+                `<label class="full">${etiqueta}<textarea name="${nombre}" rows="${filas}" maxlength="${max}">${esc(valor)}</textarea></label>`;
+            const caja = (titulo, ayuda, contenido) =>
+                `<div class="caja"><h2>${titulo}</h2>${ayuda ? `<p class="caja-ayuda">${ayuda}</p>` : ''}<div class="form">${contenido}</div></div>`;
+
+            return cabecera('Datos de la tienda', 'Todo lo que se ve en la tienda: marca, colores, contacto y textos.') + `
                 <form id="formTienda">
-                    <div class="caja"><h2>Marca</h2><div class="form">
-                        <label>Nombre<input name="marca.nombre" value="${esc(c.marca.nombre)}" maxlength="40" required></label>
-                        <label>Subtítulo<input name="marca.subtitulo" value="${esc(c.marca.subtitulo)}" maxlength="40"></label>
-                        <label>Símbolo de moneda<input name="moneda" value="${esc(c.moneda)}" maxlength="6" required></label>
-                    </div></div>
+                    ${caja('Marca', '', `
+                        ${txt('marca.nombre', 'Nombre', c.marca.nombre, 40, 'req')}
+                        ${txt('marca.subtitulo', 'Subtítulo', c.marca.subtitulo, 40)}
+                        ${campoHtml({ t: 'image', l: 'Logo', campo: 'marca.logo', ayuda: 'Aparece en la cabecera, en la portada y como ícono de la pestaña. Mejor con fondo transparente (PNG).' }, c.marca.logo)}
+                        ${txt('moneda', 'Símbolo de moneda', c.moneda, 6, 'req')}`)}
 
-                    <div class="caja"><h2>Contacto</h2><div class="form">
+                    ${caja('Colores', 'El resto de tonos (botones al pasar el cursor, fondos suaves) se calcula a partir de estos dos.', `
+                        <label>Color principal<input type="color" name="colores.primario" value="${esc(c.colores.primario)}"><small>Botones, menú, precios y buscador.</small></label>
+                        <label>Color de acento<input type="color" name="colores.acento" value="${esc(c.colores.acento)}"><small>Etiquetas, íconos y detalles.</small></label>
+                        <div class="full"><button type="button" class="btn btn-ghost btn-sm" data-colores-logo>Volver a los colores del logo</button></div>`)}
+
+                    ${caja('Contacto', '', `
                         <label>WhatsApp<input name="contacto.whatsapp" value="${esc(c.contacto.whatsapp)}" inputmode="numeric" maxlength="20"><small>Con código de país y solo números, ej. 51987654321. Aquí llegan los pedidos.</small></label>
-                        <label>Teléfono<input name="contacto.telefono" value="${esc(c.contacto.telefono)}" maxlength="40"></label>
+                        ${txt('contacto.telefono', 'Teléfono', c.contacto.telefono, 40)}
                         <label>Correo<input name="contacto.email" type="email" value="${esc(c.contacto.email)}" maxlength="120"></label>
-                        <label>Horario<input name="contacto.horario" value="${esc(c.contacto.horario)}" maxlength="100"></label>
-                        <label class="full">Dirección<input name="contacto.direccion" value="${esc(c.contacto.direccion)}" maxlength="200"></label>
-                    </div></div>
+                        ${txt('contacto.horario', 'Horario', c.contacto.horario, 100)}
+                        ${txt('contacto.direccion', 'Dirección', c.contacto.direccion, 200, 'full')}`)}
 
-                    <div class="caja"><h2>Portada</h2><div class="form">
-                        <label class="full">Etiqueta superior<input name="portada.etiqueta" value="${esc(c.portada.etiqueta)}" maxlength="80"></label>
-                        <label>Título<input name="portada.titulo" value="${esc(c.portada.titulo)}" maxlength="60"></label>
-                        <label>Título resaltado (segunda línea)<input name="portada.resaltado" value="${esc(c.portada.resaltado)}" maxlength="60"></label>
-                        <label class="full">Texto<textarea name="portada.texto" maxlength="400">${esc(c.portada.texto)}</textarea></label>
-                    </div></div>
+                    ${caja('Portada', 'La primera lámina del banner. Las siguientes son los productos marcados como destacados.', `
+                        ${txt('portada.etiqueta', 'Etiqueta superior', c.portada.etiqueta, 80, 'full')}
+                        ${txt('portada.titulo', 'Título', c.portada.titulo, 60)}
+                        ${txt('portada.resaltado', 'Título resaltado (segunda línea)', c.portada.resaltado, 60)}
+                        ${area('portada.texto', 'Texto', c.portada.texto, 400)}
+                        ${txt('textos.boton1', 'Botón principal (lleva a Productos)', c.textos.boton1, 30)}
+                        ${txt('textos.boton2', 'Botón secundario (lleva a Servicios)', c.textos.boton2, 30)}
+                        ${campoHtml({ t: 'image', l: 'Imagen de la portada', campo: 'portada.imagen', ayuda: 'Opcional. Si la quitas, se muestra el logo.' }, c.portada.imagen)}`)}
 
-                    <div class="caja"><h2>Nosotros</h2><div class="form">
-                        <label class="full">Título<input name="nosotros.titulo" value="${esc(c.nosotros.titulo)}" maxlength="120"></label>
+                    ${caja('Beneficios de la portada', 'La franja bajo el banner. Máximo 4.', `<div class="full">${listaHtml('beneficios', c.beneficios)}</div>`)}
+
+                    ${caja('Textos de la tienda', 'Deja un texto vacío para ocultarlo.', `
+                        ${txt('textos.envio', 'Aviso de la franja superior', c.textos.envio, 80)}
+                        ${txt('textos.buscador', 'Texto de ayuda del buscador', c.textos.buscador, 60)}
+                        ${txt('textos.servicios_titulo', 'Servicios: título', c.textos.servicios_titulo, 60)}
+                        ${txt('textos.servicios_texto', 'Servicios: subtítulo', c.textos.servicios_texto, 160)}
+                        ${txt('textos.contacto_titulo', 'Contacto: título', c.textos.contacto_titulo, 80, 'full')}
+                        ${area('textos.contacto_texto', 'Contacto: texto', c.textos.contacto_texto, 240, 2)}`)}
+
+                    ${caja('Nosotros', '', `
+                        ${txt('nosotros.titulo', 'Título', c.nosotros.titulo, 120, 'full')}
                         <label class="full">Texto<textarea name="nosotros.texto" rows="6" maxlength="1500">${esc(c.nosotros.texto)}</textarea><small>Deja una línea en blanco para separar párrafos.</small></label>
-                        <label class="full">Cifras<textarea name="estadisticas" rows="3">${esc(lineas(c.estadisticas, ['numero', 'texto']))}</textarea><small>Una por línea, máximo 4: <code>12+ | años de experiencia</code></small></label>
-                        <label class="full">Por qué elegirnos<textarea name="valores" rows="4">${esc(lineas(c.valores, ['icono', 'titulo', 'texto']))}</textarea><small>Una por línea, máximo 4: <code>ícono | título | texto</code></small></label>
-                        <label class="full">Beneficios<textarea name="beneficios" rows="4">${esc(lineas(c.beneficios, ['icono', 'titulo', 'texto']))}</textarea><small>Una por línea, máximo 4: <code>ícono | título | texto</code>. Íconos: ${ICONOS.map((i) => i[0]).join(', ')}.</small></label>
-                    </div></div>
+                        <div class="full"><span class="sub-label">Cifras (máximo 4)</span>${listaHtml('estadisticas', c.estadisticas)}</div>
+                        <div class="full"><span class="sub-label">Por qué elegirnos (máximo 4)</span>${listaHtml('valores', c.valores)}</div>`)}
+
+                    ${caja('Google y pestaña del navegador', 'Lo que se lee en los resultados de búsqueda y en la pestaña.', `
+                        ${txt('seo.titulo', 'Título', c.seo.titulo, 120, 'full')}
+                        ${area('seo.descripcion', 'Descripción', c.seo.descripcion, 300, 2)}`)}
 
                     <div class="barra"><button class="btn">Guardar cambios</button></div>
                 </form>`;
         },
     };
+
+    /* ---------- Listas editables (cifras, beneficios, valores) ---------- */
+
+    // Cada campo: [clave, texto de ayuda, largo máximo | 'icono']
+    const LISTAS = {
+        estadisticas: [['numero', 'Cifra (ej. 12+)', 12], ['texto', 'Texto', 40]],
+        valores: [['icono', 'Ícono', 'icono'], ['titulo', 'Título', 60], ['texto', 'Texto', 240]],
+        beneficios: [['icono', 'Ícono', 'icono'], ['titulo', 'Título', 40], ['texto', 'Texto', 80]],
+    };
+    const MAX_FILAS = 4;
+
+    function filaHtml(nombre, item = {}) {
+        const campos = LISTAS[nombre].map(([k, ayuda, tipo]) => (tipo === 'icono'
+            ? `<select data-k="${k}" aria-label="${ayuda}">${ICONOS.map(([val, t]) => `<option value="${val}"${val === item[k] ? ' selected' : ''}>${t}</option>`).join('')}</select>`
+            : `<input data-k="${k}" placeholder="${ayuda}" aria-label="${ayuda}" maxlength="${tipo}" value="${esc(item[k] || '')}">`)).join('');
+        return `<div class="fila fila-${nombre}">${campos}<button type="button" class="btn btn-danger btn-sm" data-fila-quitar aria-label="Quitar">Quitar</button></div>`;
+    }
+
+    const listaHtml = (nombre, items) => `
+        <div class="lista" data-lista="${nombre}">${(items || []).map((i) => filaHtml(nombre, i)).join('')}</div>
+        <button type="button" class="btn btn-ghost btn-sm" data-fila-nueva="${nombre}">+ Añadir</button>`;
 
     function render() {
         $('#vista').innerHTML = VISTAS[vista]();
@@ -315,15 +363,15 @@
             case 'number':
                 return `<label${clase}>${c.l}<input type="number" name="${c.campo}" min="0" step="${c.step}" value="${esc(v ?? '')}"${req}>${ayuda}</label>`;
             case 'image':
-                return `<div class="full"><label>${c.l}</label>
+                return `<div class="full"><span class="sub-label">${c.l}</span>
                     <div class="foto">
-                        <span data-foto-vista>${v ? `<img src="${esc(v)}" alt="">` : '<div class="mini-vacio"></div>'}</span>
+                        <span data-foto-vista>${v ? `<img src="${src(v)}" alt="">` : '<div class="mini-vacio"></div>'}</span>
                         <div>
                             <div class="foto-acc">
                                 <label class="btn btn-ghost btn-sm">Subir foto<input type="file" accept="image/jpeg,image/png,image/webp" data-foto hidden></label>
                                 <button type="button" class="btn btn-danger btn-sm" data-foto-quitar>Quitar</button>
                             </div>
-                            <small class="muted">JPG, PNG o WEBP. Se reduce sola a 1000 px.</small>
+                            <small class="muted">${c.ayuda ? c.ayuda + ' ' : ''}JPG, PNG o WEBP: se convierte sola a WebP para que pese menos.</small>
                         </div>
                         <input type="hidden" name="${c.campo}" value="${esc(v || '')}">
                     </div></div>`;
@@ -362,37 +410,42 @@
         return doc;
     }
 
-    /** Reduce la foto en el navegador (máx. 1000 px) antes de subirla: ocupa menos en la base */
-    async function reducirImagen(archivo) {
+    /**
+     * El servidor convierte toda imagen a WebP. Aquí solo se reducen las fotos muy grandes
+     * (más de 6 MB) para que la subida no falle.
+     */
+    async function prepararImagen(archivo) {
+        if (archivo.size <= 6 * 1024 * 1024) return archivo;
         const img = await createImageBitmap(archivo);
-        const k = Math.min(1, 1000 / Math.max(img.width, img.height));
+        const k = Math.min(1, 2400 / Math.max(img.width, img.height));
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * k);
         canvas.height = Math.round(img.height * k);
-        const ctx = canvas.getContext('2d');
-        // Fondo blanco: los PNG transparentes se guardan como JPG
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        return new Promise((ok, fallo) => canvas.toBlob((b) => (b ? ok(b) : fallo(new Error('No se pudo procesar la imagen.'))), 'image/jpeg', 0.86));
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        return new Promise((ok, fallo) => canvas.toBlob((b) => (b ? ok(b) : fallo(new Error('No se pudo procesar la imagen.'))), 'image/png'));
     }
+
+    const kb = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
     /* ---------- Guardar datos de la tienda ---------- */
 
     function leerTienda(form) {
         const f = new FormData(form);
-        const lista = (nombre, campos) => String(f.get(nombre)).split('\n').map((l) => l.trim()).filter(Boolean)
-            .map((l) => { const partes = l.split('|').map((p) => p.trim()); return Object.fromEntries(campos.map((k, i) => [k, partes[i] || ''])); });
         const grupo = (g, campos) => Object.fromEntries(campos.map((k) => [k, String(f.get(`${g}.${k}`) || '').trim()]));
+        const lista = (nombre) => $$(`[data-lista="${nombre}"] .fila`, form)
+            .map((fila) => Object.fromEntries($$('[data-k]', fila).map((el) => [el.dataset.k, el.value.trim()])));
         return {
-            marca: grupo('marca', ['nombre', 'subtitulo']),
+            marca: grupo('marca', ['nombre', 'subtitulo', 'logo']),
+            colores: grupo('colores', ['primario', 'acento']),
             contacto: grupo('contacto', ['whatsapp', 'telefono', 'email', 'direccion', 'horario']),
             moneda: String(f.get('moneda')).trim(),
-            portada: grupo('portada', ['etiqueta', 'titulo', 'resaltado', 'texto']),
+            portada: grupo('portada', ['etiqueta', 'titulo', 'resaltado', 'texto', 'imagen']),
+            textos: grupo('textos', ['envio', 'buscador', 'boton1', 'boton2', 'servicios_titulo', 'servicios_texto', 'contacto_titulo', 'contacto_texto']),
+            seo: grupo('seo', ['titulo', 'descripcion']),
             nosotros: grupo('nosotros', ['titulo', 'texto']),
-            estadisticas: lista('estadisticas', ['numero', 'texto']),
-            valores: lista('valores', ['icono', 'titulo', 'texto']),
-            beneficios: lista('beneficios', ['icono', 'titulo', 'texto']),
+            estadisticas: lista('estadisticas'),
+            valores: lista('valores'),
+            beneficios: lista('beneficios'),
         };
     }
 
@@ -419,10 +472,21 @@
     }));
 
     document.addEventListener('click', (e) => {
-        const el = e.target.closest('[data-vista],[data-nuevo],[data-editar],[data-borrar],[data-leido],[data-cerrar],[data-foto-quitar]');
+        const el = e.target.closest('[data-vista],[data-nuevo],[data-editar],[data-borrar],[data-leido],[data-cerrar],[data-foto-quitar],[data-fila-quitar],[data-fila-nueva],[data-colores-logo]');
         if (!el) return;
         const d = el.dataset;
         if (d.vista) ir(d.vista);
+        else if ('filaQuitar' in d) el.closest('.fila').remove();
+        else if (d.filaNueva) {
+            const lista = $(`[data-lista="${d.filaNueva}"]`);
+            if (lista.children.length >= MAX_FILAS) { toast(`Máximo ${MAX_FILAS} elementos`, true); return; }
+            lista.insertAdjacentHTML('beforeend', filaHtml(d.filaNueva));
+            $('input, select', lista.lastElementChild).focus();
+        } else if ('coloresLogo' in d) {
+            const form = el.closest('form');
+            form.elements['colores.primario'].value = '#26308f';
+            form.elements['colores.acento'].value = '#00adef';
+        }
         else if (d.nuevo) abrirFormulario(d.nuevo);
         else if (d.editar) abrirFormulario(d.editar, d.id);
         else if ('cerrar' in d) $('#modal').close();
@@ -446,9 +510,10 @@
         } else if (t.matches('[data-foto]') && t.files[0]) {
             const caja = t.closest('.foto');
             try {
-                const r = await api('POST', '/imagenes', await reducirImagen(t.files[0]));
+                const r = await api('POST', '/imagenes', await prepararImagen(t.files[0]));
                 $('input[type="hidden"]', caja).value = r.url;
                 $('[data-foto-vista]', caja).innerHTML = `<img src="${esc(r.url)}" alt="">`;
+                toast(`Imagen convertida a WebP: ${kb(r.original)} → ${kb(r.tamano)}`);
             } catch (err) {
                 toast(err.message, true);
             }

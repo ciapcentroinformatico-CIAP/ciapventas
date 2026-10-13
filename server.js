@@ -7,6 +7,7 @@
 // En tu computadora las variables se leen del archivo .env (en Render se definen en el panel)
 try { process.loadEnvFile(); } catch (e) { /* sin archivo .env */ }
 
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const datos = require('./src/db');
@@ -99,7 +100,25 @@ app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'Ruta no 
 
 /* ---------- Tienda ---------- */
 
-app.use(express.static(path.join(__dirname, 'public')));
+const PUBLIC = path.join(__dirname, 'public');
+const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// La portada sale con el título, la descripción, el color y el ícono definidos en el panel,
+// para que Google y la pestaña del navegador los vean sin esperar al JavaScript
+app.get(['/', '/index.html'], async (req, res, next) => {
+    try {
+        const [html, t] = await Promise.all([fs.promises.readFile(path.join(PUBLIC, 'index.html'), 'utf8'), datos.tienda()]);
+        const icono = t.marca.logo && t.marca.logo !== 'assets/img/logo.webp' ? t.marca.logo : 'assets/img/favicon.png';
+        res.set('Cache-Control', 'no-cache').type('html').send(html
+            .replace(/<title>[^<]*<\/title>/, () => `<title>${escHtml(t.seo.titulo)}</title>`)
+            .replace(/(<meta name="description" content=")[^"]*/, (m, a) => a + escHtml(t.seo.descripcion))
+            .replace(/(<meta name="theme-color" content=")[^"]*/, (m, a) => a + escHtml(t.colores.primario))
+            .replace(/(<link rel="icon" href=")[^"]*/, (m, a) => a + escHtml(icono)));
+    } catch (err) { next(err); }
+});
+app.get('/favicon.ico', (req, res) => res.redirect(301, '/assets/img/favicon.png'));
+
+app.use(express.static(PUBLIC));
 
 app.use((err, req, res, next) => {
     if (err.type === 'entity.parse.failed' || err.type === 'entity.too.large') {

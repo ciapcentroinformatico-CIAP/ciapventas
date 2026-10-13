@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CIAP Informática · Productos y servicios de tecnología</title>
     <meta name="description" content="Tienda de informática: laptops, computadoras, componentes, periféricos y redes. Servicio técnico, armado de PC e instalación de redes.">
-    <meta name="theme-color" content="#0a6cdc">
+    <meta name="theme-color" content="#26308f">
 
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a6cdc'/%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.4' d='M11 11h10v10H11zM14 5v6M18 5v6M14 21v6M18 21v6M5 14h6M5 18h6M21 14h6M21 18h6'/%3E%3C/svg%3E">
+    <link rel="icon" href="assets/img/favicon.png">
+    <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
@@ -19,7 +20,7 @@
     <!-- Franja de contacto -->
     <div class="util">
         <div class="wrap util-row">
-            <span class="util-item"><span data-icon="truck"></span>Envíos a todo el país</span>
+            <span class="util-item"><span data-icon="truck"></span><span data-txt="envio"></span></span>
             <span class="util-item"><span data-icon="clock"></span><span data-contact="horario"></span></span>
             <span class="util-item util-right"><span data-icon="phone"></span><span data-contact="telefono"></span></span>
             <span class="util-item"><span data-icon="mail"></span><span data-contact="email"></span></span>
@@ -31,7 +32,7 @@
         <button class="icon-btn burger" id="btnMenu" aria-label="Menú" aria-controls="nav" aria-expanded="false"><span data-icon="menu"></span></button>
 
         <a class="brand" href="#inicio" aria-label="CIAP inicio">
-            <span class="brand-mark" data-icon="cpu"></span>
+            <img class="brand-logo" id="brandLogo" src="assets/img/logo-sm.webp" alt="" width="126" height="160">
             <span class="brand-text">
                 <span class="brand-name" data-cfg="nombre">CIAP</span>
                 <span class="brand-sub" data-cfg="subtitulo">Informática</span>
@@ -40,7 +41,7 @@
 
         <form class="search" id="searchForm" role="search">
             <select id="searchCat" aria-label="Categoría"></select>
-            <input type="search" id="searchInput" placeholder="Buscar laptop, SSD, router…" autocomplete="off" aria-label="Buscar productos">
+            <input type="search" id="searchInput" autocomplete="off" aria-label="Buscar productos">
             <button class="search-btn" aria-label="Buscar"><span data-icon="search"></span><span class="search-txt">Buscar</span></button>
         </form>
 
@@ -114,8 +115,8 @@
     <section class="view" data-view="servicios">
         <div class="wrap pad">
             <div class="view-title">
-                <h2>Servicios técnicos</h2>
-                <span class="muted">Diagnóstico sin costo si realizas el servicio con nosotros.</span>
+                <h2 data-txt="servicios_titulo"></h2>
+                <span class="muted" data-txt="servicios_texto"></span>
             </div>
             <div class="services" id="serviceGrid"></div>
         </div>
@@ -139,8 +140,8 @@
         <div class="wrap pad contact">
             <div>
                 <span class="eyebrow">Contacto</span>
-                <h2>Cuéntanos qué necesitas</h2>
-                <p class="muted">Cotizaciones, consultas de stock o soporte técnico. Te respondemos el mismo día.</p>
+                <h2 data-txt="contacto_titulo"></h2>
+                <p class="muted" data-txt="contacto_texto"></p>
                 <ul class="contact-list" id="contactList"></ul>
             </div>
             <form class="panel form" id="contactForm">

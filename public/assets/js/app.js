@@ -48,6 +48,8 @@
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const money = (n) => `${T.moneda} ${Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    // Logo que trae la tienda (hay una versión pequeña para la cabecera)
+    const LOGO = 'assets/img/logo.webp';
     let catMap = {};
     // Un producto con una categoría que ya no existe se sigue mostrando
     const catOf = (p) => catMap[p.categoria] || { nombre: '', icono: 'cpu' };
@@ -115,7 +117,16 @@
     function renderStatic() {
         $$('[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
         $$('[data-cfg]').forEach((el) => { el.textContent = T.marca[el.dataset.cfg]; });
-        document.title = `${T.marca.nombre} ${T.marca.subtitulo} · Productos y servicios de tecnología`;
+        document.title = T.seo.titulo;
+
+        // Colores y logo definidos en el panel
+        const raiz = document.documentElement.style;
+        raiz.setProperty('--blue', T.colores.primario);
+        raiz.setProperty('--cyan', T.colores.acento);
+        $('#brandLogo').src = T.marca.logo === LOGO ? 'assets/img/logo-sm.webp' : T.marca.logo;
+
+        $$('[data-txt]').forEach((el) => { el.textContent = T.textos[el.dataset.txt] || ''; });
+        $('#searchInput').placeholder = T.textos.buscador;
 
         $$('[data-contact]').forEach((el) => { el.textContent = T.contacto[el.dataset.contact] || ''; });
 
@@ -182,14 +193,12 @@
                         <h1>${esc(T.portada.titulo)}<em>${esc(T.portada.resaltado)}</em></h1>
                         <p>${esc(T.portada.texto)}</p>
                         <div class="btn-row">
-                            <a href="#productos" class="btn btn-solid">Ver productos</a>
-                            <a href="#servicios" class="btn btn-line">Nuestros servicios</a>
+                            ${T.textos.boton1 ? `<a href="#productos" class="btn btn-solid">${esc(T.textos.boton1)}</a>` : ''}
+                            ${T.textos.boton2 ? `<a href="#servicios" class="btn btn-line">${esc(T.textos.boton2)}</a>` : ''}
                         </div>
                     </div>
                     <div class="slide-visual" aria-hidden="true">
-                        <span class="orb orb-1">${icon('laptop')}</span>
-                        <span class="orb orb-2">${icon('wifi')}</span>
-                        <span class="orb orb-3">${icon('wrench')}</span>
+                        <img class="slide-logo" src="${esc(T.portada.imagen || T.marca.logo)}" alt="">
                     </div>
                 </div>`;
         }

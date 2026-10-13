@@ -6,7 +6,15 @@
 module.exports = {
     marca: {
         nombre: 'CIAP',
-        subtitulo: 'Informática',
+        subtitulo: 'Centro Informático',
+        // Logo de la tienda: también se usa como ícono de la pestaña
+        logo: 'assets/img/logo.webp',
+    },
+
+    // Paleta tomada del logo
+    colores: {
+        primario: '#26308f',
+        acento: '#00adef',
     },
 
     contacto: {
@@ -25,6 +33,26 @@ module.exports = {
         titulo: 'Equipos que rinden.',
         resaltado: 'Servicio que responde.',
         texto: 'Laptops, computadoras, componentes y redes con garantía real, más un taller técnico propio para instalar, reparar y mantener todo lo que vendemos.',
+        // Imagen de la primera lámina; vacía = se muestra el logo
+        imagen: '',
+    },
+
+    // Textos sueltos de la tienda
+    textos: {
+        envio: 'Envíos a todo el país',
+        buscador: 'Buscar laptop, SSD, router…',
+        boton1: 'Ver productos',
+        boton2: 'Nuestros servicios',
+        servicios_titulo: 'Servicios técnicos',
+        servicios_texto: 'Diagnóstico sin costo si realizas el servicio con nosotros.',
+        contacto_titulo: 'Cuéntanos qué necesitas',
+        contacto_texto: 'Cotizaciones, consultas de stock o soporte técnico. Te respondemos el mismo día.',
+    },
+
+    // Lo que muestran Google y la pestaña del navegador
+    seo: {
+        titulo: 'CIAP · Centro Informático | Productos y servicios de tecnología',
+        descripcion: 'Tienda de informática: laptops, computadoras, componentes, periféricos y redes. Servicio técnico, armado de PC e instalación de redes.',
     },
 
     nosotros: {

@@ -67,10 +67,12 @@ Entra en `https://TU-SITIO.onrender.com/admin/` con el usuario `admin` y la cont
 | Productos | Crear, editar, ocultar o borrar. Precio, oferta, stock, características y foto |
 | Categorías | Crear, ordenar u ocultar. No se puede borrar una categoría que tiene productos |
 | Servicios | Crear y editar los servicios técnicos |
-| Datos de la tienda | Marca, WhatsApp, contacto y los textos de la portada y de Nosotros |
+| Datos de la tienda | Logo, colores, WhatsApp y contacto, portada, beneficios, textos de cada sección, Nosotros y lo que muestra Google |
 
 - Los cambios se ven en la tienda al momento.
-- **Fotos:** se suben desde el formulario del producto, se reducen a 1000 px y se guardan en la base de datos, así que no se pierden cuando Render reinicia.
+- **Fotos:** toda imagen que se sube (productos, logo, portada) se convierte a WebP, se reduce a 1400 px como máximo y se guarda en la base de datos, así que pesa poco y no se pierde cuando Render reinicia.
+- **Logo y colores:** el logo se usa en la cabecera, en la portada y como ícono de la pestaña. Los dos colores de la tienda se eligen en *Datos de la tienda*; el botón *Volver a los colores del logo* restaura el azul `#26308f` y el celeste `#00adef`.
+- **Lo único que no se cambia desde el panel** es el usuario y la contraseña de acceso: van en las variables `ADMIN_USER` y `ADMIN_PASSWORD` de Render.
 - **Destacado en la portada:** los productos marcados rotan en la ficha de la página de inicio.
 - **Inventario:** los pedidos no descuentan stock. Quedan como `pendiente`, el cobro se coordina por WhatsApp y el stock se ajusta a mano en el producto.
 - **Seguridad:** tras 5 intentos fallidos el acceso se bloquea 15 minutos, y la sesión dura 8 horas. Cambiar `ADMIN_PASSWORD` cierra todas las sesiones abiertas.
@@ -117,6 +119,7 @@ Sin base de datos la tienda se muestra con los datos iniciales, pero no guarda m
 ├── public/             La tienda (lo que ve el cliente)
 │   ├── index.html
 │   ├── assets/css/styles.css, assets/js/app.js
+│   ├── assets/img/     Logo e íconos de la pestaña
 │   └── admin/          Panel de administración (index.html, admin.css, admin.js)
 ├── render.yaml         Configuración del servicio en Render
 ├── .env.example        Plantilla de las variables de entorno
