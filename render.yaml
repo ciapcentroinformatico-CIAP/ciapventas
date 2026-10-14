@@ -15,6 +15,9 @@ services:
         value: 22
       - key: MONGODB_DB
         value: ciap
+      # Dirección oficial de la tienda: Google la usa como principal (canonical, sitemap)
+      - key: SITE_URL
+        value: https://ciapcax.com
       # La cadena de conexión de Atlas (con la contraseña) se escribe en el panel de Render, no aquí
       - key: MONGODB_URI
         sync: false

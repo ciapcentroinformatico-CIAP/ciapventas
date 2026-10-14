@@ -103,23 +103,90 @@ app.use('/api', (req, res) => res.status(404).json({ ok: false, error: 'Ruta no 
 const PUBLIC = path.join(__dirname, 'public');
 const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// La portada sale con el título, la descripción, el color y el ícono definidos en el panel,
-// para que Google y la pestaña del navegador los vean sin esperar al JavaScript
+// Dirección oficial de la tienda (SITE_URL, p. ej. https://ciapcax.com). Sin ella se usa el dominio por el que se entra.
+// Así Google trata ciapcax.com como la dirección principal aunque la tienda también se abra por onrender.com.
+const origen = (req) => (process.env.SITE_URL || '').trim().replace(/\/+$/, '')
+    || `${req.hostname === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
+const absoluta = (base, ruta) => (/^https?:\/\//.test(ruta) ? ruta : `${base}/${String(ruta).replace(/^\/+/, '')}`);
+const MONEDAS = { 'S/': 'PEN', '$': 'USD', 'US$': 'USD', '€': 'EUR' };
+
+// Datos estructurados (schema.org) para Google: la tienda con su contacto, sus servicios y los productos con precio
+function datosEstructurados(t, base) {
+    const moneda = MONEDAS[String(t.moneda || '').trim()] || 'PEN';
+    const tienda = {
+        '@type': 'ComputerStore',
+        '@id': `${base}/#tienda`,
+        name: [t.marca.nombre, t.marca.subtitulo].filter(Boolean).join(' · '),
+        description: t.seo.descripcion,
+        url: `${base}/`,
+        logo: absoluta(base, t.marca.logo || 'assets/img/logo.webp'),
+        image: absoluta(base, t.portada.imagen || t.marca.logo || 'assets/img/logo.webp'),
+        telephone: t.contacto.telefono || undefined,
+        email: t.contacto.email || undefined,
+        address: t.contacto.direccion ? { '@type': 'PostalAddress', streetAddress: t.contacto.direccion, addressCountry: 'PE' } : undefined,
+        makesOffer: t.servicios.map((s) => ({
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: s.nombre, description: s.texto },
+            ...(s.desde ? { price: s.desde, priceCurrency: moneda } : {}),
+        })),
+    };
+    const productos = {
+        '@type': 'ItemList',
+        name: 'Productos',
+        itemListElement: t.productos.map((p, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            item: {
+                '@type': 'Product',
+                name: p.nombre,
+                description: p.descripcion || undefined,
+                image: p.imagen ? absoluta(base, p.imagen) : undefined,
+                category: (t.categorias.find((c) => c.slug === p.categoria) || {}).nombre,
+                offers: {
+                    '@type': 'Offer',
+                    price: p.precio,
+                    priceCurrency: moneda,
+                    availability: `https://schema.org/${p.stock > 0 ? 'InStock' : 'OutOfStock'}`,
+                    seller: { '@id': `${base}/#tienda` },
+                },
+            },
+        })),
+    };
+    // "<" escapado para que ningún texto del panel pueda cerrar la etiqueta <script>
+    return JSON.stringify({ '@context': 'https://schema.org', '@graph': [tienda, productos] }).replace(/</g, '\\u003c');
+}
+
+// La portada sale con el título, la descripción, el color, el ícono y los datos para Google definidos en el panel,
+// para que Google, WhatsApp/Facebook y la pestaña del navegador los vean sin esperar al JavaScript
 app.get(['/', '/index.html'], async (req, res, next) => {
     try {
         const [html, t] = await Promise.all([fs.promises.readFile(path.join(PUBLIC, 'index.html'), 'utf8'), datos.tienda()]);
         const icono = t.marca.logo && t.marca.logo !== 'assets/img/logo.webp' ? t.marca.logo : 'assets/img/favicon.png';
+        const base = origen(req);
+        const imagen = absoluta(base, t.portada.imagen || t.marca.logo || 'assets/img/logo.webp');
+        const meta = [
+            `<link rel="canonical" href="${escHtml(base)}/">`,
+            '<meta property="og:type" content="website">',
+            '<meta property="og:locale" content="es_PE">',
+            `<meta property="og:site_name" content="${escHtml(t.marca.nombre)}">`,
+            `<meta property="og:title" content="${escHtml(t.seo.titulo)}">`,
+            `<meta property="og:description" content="${escHtml(t.seo.descripcion)}">`,
+            `<meta property="og:url" content="${escHtml(base)}/">`,
+            `<meta property="og:image" content="${escHtml(imagen)}">`,
+            '<meta name="twitter:card" content="summary_large_image">',
+            `<script type="application/ld+json">${datosEstructurados(t, base)}</script>`,
+        ].join('\n    ');
         res.set('Cache-Control', 'no-cache').type('html').send(html
             .replace(/<title>[^<]*<\/title>/, () => `<title>${escHtml(t.seo.titulo)}</title>`)
             .replace(/(<meta name="description" content=")[^"]*/, (m, a) => a + escHtml(t.seo.descripcion))
             .replace(/(<meta name="theme-color" content=")[^"]*/, (m, a) => a + escHtml(t.colores.primario))
-            .replace(/(<link rel="icon" href=")[^"]*/, (m, a) => a + escHtml(icono)));
+            .replace(/(<link rel="icon" href=")[^"]*/, (m, a) => a + escHtml(icono))
+            .replace('</head>', () => `    ${meta}\n</head>`));
     } catch (err) { next(err); }
 });
 app.get('/favicon.ico', (req, res) => res.redirect(301, '/assets/img/favicon.png'));
 
-// Sitemap y robots.txt para Google, con el dominio por el que se entra (ciapcax.com u onrender.com)
-const origen = (req) => `${req.hostname === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
+// Sitemap y robots.txt para Google
 app.get('/sitemap.xml', (req, res) => {
     res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
