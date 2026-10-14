@@ -600,9 +600,10 @@
         showView(location.hash.slice(1));
     }
 
+    // Si falla, se deja el contenido que ya trae el HTML (lo lee Google) y solo se avisa arriba
     init().catch((err) => {
         console.error(err);
-        document.querySelector('.stage').innerHTML =
-            '<p class="load-error">No se pudo cargar la tienda. Recarga la página en unos segundos.</p>';
+        document.querySelector('.stage').insertAdjacentHTML('afterbegin',
+            '<p class="load-error">No se pudo cargar la tienda. Recarga la página en unos segundos.</p>');
     });
 })();
