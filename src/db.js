@@ -57,7 +57,7 @@ async function conectar() {
     }
 }
 
-/** Crea índices únicos y carga los datos iniciales en las colecciones vacías */
+/** Crea índices únicos y, en una base nueva, carga los datos iniciales */
 async function inicializar(base) {
     await Promise.all([
         base.collection('productos').createIndex({ id: 1 }, { unique: true }),
@@ -67,8 +67,11 @@ async function inicializar(base) {
     ]);
 
     const config = Object.fromEntries(CONFIG_KEYS.map((k) => [k, seed[k]]));
-    await base.collection('configuracion').updateOne({ _id: 'tienda' }, { $setOnInsert: config }, { upsert: true });
+    const { upsertedCount } = await base.collection('configuracion').updateOne({ _id: 'tienda' }, { $setOnInsert: config }, { upsert: true });
 
+    // Los datos de ejemplo solo se cargan en una base nueva (sin configuración). Si después se vacía
+    // una colección desde el panel (p. ej. todos los productos), no vuelve a llenarse al reiniciar.
+    if (!upsertedCount) return;
     for (const nombre of ['categorias', 'productos', 'servicios']) {
         const coll = base.collection(nombre);
         if (await coll.estimatedDocumentCount() > 0) continue;

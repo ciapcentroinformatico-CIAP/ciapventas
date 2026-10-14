@@ -165,7 +165,9 @@ function contenidoInicial(html, t) {
     const pasos = [
         llenar('feature', `<div class="slide"><h1>${escHtml(t.portada.titulo)} ${escHtml(t.portada.resaltado)}</h1><p>${escHtml(t.portada.texto)}</p></div>`),
         llenar('catTiles', t.categorias.map((c) => `<a href="#productos">${escHtml(c.nombre)}</a>`).join(' ')),
-        llenar('productGrid', t.productos.map((p) => `<article class="card"><h3>${escHtml(p.nombre)}</h3><p>${escHtml(p.descripcion || '')}</p><p><strong>${dinero(p.precio)}</strong></p></article>`).join('')),
+        llenar('productGrid', !t.productos.length
+            ? '<p>Estamos actualizando nuestro catálogo. Escríbenos por WhatsApp o visítanos para consultar stock y precios.</p>'
+            : t.productos.map((p) => `<article class="card"><h3>${escHtml(p.nombre)}</h3><p>${escHtml(p.descripcion || '')}</p><p><strong>${dinero(p.precio)}</strong></p></article>`).join('')),
         llenar('serviceGrid', t.servicios.map((s) => `<article><h3>${escHtml(s.nombre)}</h3><p>${escHtml(s.texto || '')}</p></article>`).join('')),
         llenar('aboutTitle', escHtml(t.nosotros.titulo)),
         llenar('aboutText', parrafos),

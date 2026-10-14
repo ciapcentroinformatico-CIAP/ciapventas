@@ -309,13 +309,18 @@
             </article>`;
     }
 
+    const CATALOGO_VACIO = 'Estamos actualizando nuestro catálogo. Escríbenos por WhatsApp o visítanos para consultar stock y precios.';
+
     function renderProducts() {
         const lista = productosFiltrados();
         $('#productGrid').innerHTML = lista.map(productCard).join('');
         $('#emptyState').hidden = lista.length > 0;
-        $('#emptyState').textContent = filtro.categoria === 'favoritos' && !filtro.q
-            ? 'Aún no tienes favoritos. Toca el corazón de un producto para guardarlo.'
-            : 'No encontramos productos con ese filtro.';
+        // Con el catálogo vacío no se usa "No encontramos…": Google lo toma como página de error (Soft 404)
+        $('#emptyState').textContent = !T.productos.length
+            ? CATALOGO_VACIO
+            : filtro.categoria === 'favoritos' && !filtro.q
+                ? 'Aún no tienes favoritos. Toca el corazón de un producto para guardarlo.'
+                : 'No encontramos productos con ese filtro.';
         $('#catalogTitle').textContent = tituloCatalogo();
         $('#resultCount').textContent = `${lista.length} ${lista.length === 1 ? 'producto' : 'productos'}`;
     }
