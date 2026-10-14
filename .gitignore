@@ -4,6 +4,7 @@ node_modules/
 # Datos de conexión (contienen la contraseña de MongoDB): nunca se suben
 .env
 .env.*
+*.env
 !.env.example
 
 # Registros

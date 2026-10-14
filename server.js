@@ -118,6 +118,23 @@ app.get(['/', '/index.html'], async (req, res, next) => {
 });
 app.get('/favicon.ico', (req, res) => res.redirect(301, '/assets/img/favicon.png'));
 
+// Sitemap y robots.txt para Google, con el dominio por el que se entra (ciapcax.com u onrender.com)
+const origen = (req) => `${req.hostname === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
+app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${origen(req)}/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`);
+});
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain').send(`User-agent: *\nDisallow: /admin/\nDisallow: /api/\n\nSitemap: ${origen(req)}/sitemap.xml\n`);
+});
+
 app.use(express.static(PUBLIC));
 
 app.use((err, req, res, next) => {
