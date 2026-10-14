@@ -156,6 +156,25 @@ function datosEstructurados(t, base) {
     return JSON.stringify({ '@context': 'https://schema.org', '@graph': [tienda, productos] }).replace(/</g, '\\u003c');
 }
 
+// Contenido de la tienda ya escrito en el HTML: sin esto Google ve la página vacía y la marca como "Soft 404".
+// app.js reemplaza cada bloque con su versión interactiva al cargar.
+function contenidoInicial(html, t) {
+    const dinero = (n) => `${escHtml(t.moneda)} ${Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const parrafos = String(t.nosotros.texto || '').split(/\n\s*\n/).filter((p) => p.trim()).map((p) => `<p>${escHtml(p.trim())}</p>`).join('');
+    const llenar = (id, contenido) => (h) => h.replace(new RegExp(`(<[^>]+id="${id}"[^>]*>)(</)`), (m, a, b) => a + contenido + b);
+    const pasos = [
+        llenar('feature', `<div class="slide"><h1>${escHtml(t.portada.titulo)} ${escHtml(t.portada.resaltado)}</h1><p>${escHtml(t.portada.texto)}</p></div>`),
+        llenar('catTiles', t.categorias.map((c) => `<a href="#productos">${escHtml(c.nombre)}</a>`).join(' ')),
+        llenar('productGrid', t.productos.map((p) => `<article class="card"><h3>${escHtml(p.nombre)}</h3><p>${escHtml(p.descripcion || '')}</p><p><strong>${dinero(p.precio)}</strong></p></article>`).join('')),
+        llenar('serviceGrid', t.servicios.map((s) => `<article><h3>${escHtml(s.nombre)}</h3><p>${escHtml(s.texto || '')}</p></article>`).join('')),
+        llenar('aboutTitle', escHtml(t.nosotros.titulo)),
+        llenar('aboutText', parrafos),
+        (h) => h.replace(/(<(\w+)[^>]*data-txt="(\w+)"[^>]*>)(<\/\2>)/g, (m, a, tag, k, b) => a + escHtml(t.textos[k] || '') + b),
+        (h) => h.replace(/(<(\w+)[^>]*data-contact="(\w+)"[^>]*>)(<\/\2>)/g, (m, a, tag, k, b) => a + escHtml(t.contacto[k] || '') + b),
+    ];
+    return pasos.reduce((h, paso) => paso(h), html);
+}
+
 // La portada sale con el título, la descripción, el color, el ícono y los datos para Google definidos en el panel,
 // para que Google, WhatsApp/Facebook y la pestaña del navegador los vean sin esperar al JavaScript
 app.get(['/', '/index.html'], async (req, res, next) => {
@@ -176,7 +195,7 @@ app.get(['/', '/index.html'], async (req, res, next) => {
             '<meta name="twitter:card" content="summary_large_image">',
             `<script type="application/ld+json">${datosEstructurados(t, base)}</script>`,
         ].join('\n    ');
-        res.set('Cache-Control', 'no-cache').type('html').send(html
+        res.set('Cache-Control', 'no-cache').type('html').send(contenidoInicial(html, t)
             .replace(/<title>[^<]*<\/title>/, () => `<title>${escHtml(t.seo.titulo)}</title>`)
             .replace(/(<meta name="description" content=")[^"]*/, (m, a) => a + escHtml(t.seo.descripcion))
             .replace(/(<meta name="theme-color" content=")[^"]*/, (m, a) => a + escHtml(t.colores.primario))
