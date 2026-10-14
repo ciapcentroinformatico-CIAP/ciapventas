@@ -139,14 +139,15 @@
 
         const conteo = {};
         T.productos.forEach((p) => { conteo[p.categoria] = (conteo[p.categoria] || 0) + 1; });
-        const cuantos = (c) => { const n = conteo[c.slug] || 0; return `${n} ${n === 1 ? 'producto' : 'productos'}`; };
+        // Sin productos en la categoría no se muestra "0 productos" (Google lo toma como página vacía)
+        const cuantos = (c) => { const n = conteo[c.slug] || 0; return n ? `${n} ${n === 1 ? 'producto' : 'productos'}` : 'Consultar stock'; };
         $('#catTiles').innerHTML = T.categorias.map((c) => `
             <button class="cat-tile" data-cat="${esc(c.slug)}">
                 <span class="cat-ic">${icon(c.icono)}</span>
                 <span class="cat-txt"><strong>${esc(c.nombre)}</strong><small>${cuantos(c)}</small></span>
             </button>`).join('');
         $('#catMenu').innerHTML = T.categorias.map((c) => `
-            <button data-cat="${esc(c.slug)}" role="menuitem">${icon(c.icono)}<span>${esc(c.nombre)}</span><small>${conteo[c.slug] || 0}</small></button>`).join('');
+            <button data-cat="${esc(c.slug)}" role="menuitem">${icon(c.icono)}<span>${esc(c.nombre)}</span>${conteo[c.slug] ? `<small>${conteo[c.slug]}</small>` : ''}</button>`).join('');
         $('#searchCat').innerHTML = '<option value="todos">Todas las categorías</option>'
             + T.categorias.map((c) => `<option value="${esc(c.slug)}">${esc(c.nombre)}</option>`).join('');
 
